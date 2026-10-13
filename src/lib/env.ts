@@ -27,7 +27,9 @@ const envSchema = z.object({
   AUTH_URL: z.string().url().optional(),
   NEXTAUTH_URL: z.string().url().optional(),
   OPENROUTER_API_KEY: z.string().min(1, 'OPENROUTER_API_KEY is required'),
-  GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1, 'GOOGLE_GENERATIVE_AI_API_KEY is required'),
+  // Optional — only needed for Google Gemini (chat models via BYOK, or
+  // EMBEDDING_PROVIDER=google). Vision and embeddings default to OpenRouter.
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string().optional(),
   COHERE_API_KEY: z.string().optional(),
 
   // Optional variables with defaults
@@ -68,10 +70,13 @@ const envSchema = z.object({
   OLLAMA_BASE_URL: z.string().optional(),
 
   // Embedding configuration — dimensions must match pgvector column size.
-  // Default: 768 (Google Gemini text-embedding-004).
+  // Default: 1024 (OpenRouter free liquid/lfm-2.5-embedding-350m or Ollama nomic-embed-text).
   EMBEDDING_PROVIDER: z.enum(['google', 'openai', 'ollama']).default('google'),
   EMBEDDING_MODEL: z.string().optional(),
-  EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(768),
+  EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1024),
+  // OpenAI-compatible endpoint for embeddings (e.g. https://openrouter.ai/api/v1)
+  EMBEDDING_BASE_URL: z.string().url().optional(),
+  EMBEDDING_API_KEY: z.string().optional(),
 
   // PostHog analytics (optional)
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),

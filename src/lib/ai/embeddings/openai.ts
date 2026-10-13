@@ -301,16 +301,20 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
 }
 
 /**
- * Create OpenAI embedding provider with default config
+ * Create OpenAI embedding provider with default config.
+ * Works with OpenAI directly or any OpenAI-compatible endpoint
+ * (e.g. OpenRouter embeddings at https://openrouter.ai/api/v1).
  */
 export function createOpenAIProvider(
   model: OpenAIModel = 'text-embedding-3-small',
-  apiKey?: string
+  apiKey?: string,
+  baseUrl?: string
 ): OpenAIEmbeddingProvider {
   return new OpenAIEmbeddingProvider({
     provider: 'openai',
     model,
     dimensions: OPENAI_MODELS[model].dimensions,
     apiKey: apiKey ?? process.env.OPENAI_API_KEY,
+    baseUrl,
   });
 }

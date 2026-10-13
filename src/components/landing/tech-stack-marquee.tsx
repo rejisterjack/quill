@@ -36,7 +36,9 @@ const duplicatedTechStack = [
 
 function TechBadge({ tech }: { tech: Tech }): React.ReactElement {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full glass-light px-4 py-2 mr-3 hover:bg-primary/5 transition-colors cursor-default shrink-0">
+    // Solid background on purpose: these badges animate continuously, and a
+    // backdrop-filter on moving elements forces re-sampling every frame.
+    <div className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-card/80 px-4 py-2 mr-3 transition-colors hover:border-primary/30 cursor-default shrink-0">
       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tech.color }} />
       <span className="text-sm font-medium text-foreground whitespace-nowrap">{tech.name}</span>
       <span className="text-[10px] text-muted-foreground uppercase tracking-wider whitespace-nowrap">

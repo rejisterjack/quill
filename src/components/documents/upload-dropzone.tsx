@@ -26,7 +26,7 @@ import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { fetchWithCsrf } from '@/lib/security/csrf';
+import { fetchWithCsrf } from '@/lib/security/csrf-client';
 import { cn } from '@/lib/utils';
 
 // =============================================================================

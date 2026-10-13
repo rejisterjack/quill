@@ -26,7 +26,7 @@ export const STACK_FACTS = [
   'Prisma 7 ORM',
   'Vercel AI SDK (streaming SSE responses)',
   'Providers: OpenRouter (free models), Google Gemini, OpenAI, Anthropic, Ollama',
-  'Embeddings: Google Gemini free tier (1,500 req/day) or any OpenAI-compatible API',
+  'Embeddings: OpenRouter free tier (default) or any OpenAI-compatible API',
   'Inngest background jobs (document processing pipelines)',
   'NextAuth v5 (credentials, OAuth, MFA, SAML SSO)',
   'Tailwind CSS 4 + shadcn/ui',

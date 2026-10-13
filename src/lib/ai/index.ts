@@ -2,8 +2,8 @@
  * @fileoverview AI Module - Complete AI provider integration
  *
  * Provides a unified interface for LLM chat completions and text embeddings.
- * Default configuration uses free tiers of OpenRouter (chat) and Google Gemini (embeddings),
- * with automatic fallback chains for reliability.
+ * Default configuration uses OpenRouter free models for chat, vision, and
+ * embeddings, with automatic fallback chains for reliability.
  *
  * ## Supported Providers
  *
@@ -12,8 +12,9 @@
  * - **Ollama** - Self-hosted local models
  *
  * ### Embeddings
- * - **Google Gemini** - Free tier (1,500 req/day), 768 dimensions
- * - **Local** - Transformers.js on-device
+ * - **OpenRouter** - Free embedding models via EMBEDDING_PROVIDER=openai
+ * - **Google Gemini** - Optional (1,500 req/day free tier)
+ * - **Ollama / Local** - Self-hosted options
  *
  * ## Quick Start
  *
@@ -37,41 +38,26 @@
  * ```
  *
  * @module ai
- * @requires @ai-sdk/google
  * @requires @openrouter/ai-sdk-provider
  * @see {@link https://sdk.vercel.ai/|Vercel AI SDK Documentation}
  * @see {@link https://openrouter.ai/docs|OpenRouter Documentation}
  */
 
 import { createHash } from 'node:crypto';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { openrouter } from '@openrouter/ai-sdk-provider';
 import {
-  embed,
-  embedMany,
   generateText,
   type LanguageModelUsage,
   type LanguageModelV1,
   streamText,
   type UIMessage,
 } from 'ai';
-import { asEmbeddingModel } from '@/lib/ai/types';
 import { logger } from '@/lib/logger';
 import { estimateTokens } from '@/lib/rag/token-budget';
 import { embeddingCircuitBreaker } from '@/lib/resilience/external-services';
 import type { RAGConfig } from '@/types';
 
-// Embedding model configuration (Google Gemini - FREE)
-const EMBEDDING_MODEL = 'text-embedding-004';
-
-// Validate Google API key at module load time
-if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-  throw new Error(
-    'GOOGLE_GENERATIVE_AI_API_KEY is required for embeddings. ' +
-      'Get a free key at https://aistudio.google.com/app/apikey'
-  );
-}
-const googleAI = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY });
+const DEFAULT_EMBEDDING_MODEL = 'liquid/lfm-2.5-embedding-350m:free';
 
 /**
  * BEST OpenRouter FREE Models - Ranked by Performance
@@ -161,7 +147,7 @@ export const defaultAIConfig: RAGConfig = {
   temperature: 0.7,
   maxTokens: 2000,
   model: (process.env.DEFAULT_MODEL as RAGConfig['model']) || 'auto', // Dynamic — resolved via model discovery
-  embeddingModel: EMBEDDING_MODEL,
+  embeddingModel: process.env.EMBEDDING_MODEL ?? DEFAULT_EMBEDDING_MODEL,
 };
 
 // ==================== Chat Completions (OpenRouter) ====================
@@ -301,47 +287,30 @@ export function resolveModel(modelId: string): LanguageModelV1 | null {
   return openrouter(modelId);
 }
 
-// ==================== Embeddings (Google Gemini - FREE) ====================
+// ==================== Embeddings (via EMBEDDING_PROVIDER config) ====================
 
 /**
- * Generate embeddings using Google Gemini (FREE via AI Studio)
- * Get API key: https://aistudio.google.com/app/apikey
+ * Generate an embedding using the configured embedding provider
+ * (default: free OpenRouter model, see src/lib/ai/embeddings).
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-  return embeddingCircuitBreaker.execute(async () => {
-    const result = await embed({
-      model: asEmbeddingModel<Parameters<typeof embed>[0]['model']>(
-        googleAI.textEmbeddingModel(EMBEDDING_MODEL)
-      ),
-      value: text,
-    });
+  const { createEmbeddingProviderFromEnv } = await import('./embeddings');
+  const provider = createEmbeddingProviderFromEnv();
 
-    return Array.from(result.embedding);
-  });
+  return embeddingCircuitBreaker.execute(() => provider.embedQuery(text));
 }
 
 /**
- * Generate embeddings for multiple texts using Google Gemini
- * Processes in batches of 100 (Google's limit)
+ * Generate embeddings for multiple texts using the configured provider.
+ * Batching and rate limiting are handled by the provider.
  */
 export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
-  const batchSize = 100;
-  const embeddings: number[][] = [];
+  if (texts.length === 0) return [];
 
-  for (let i = 0; i < texts.length; i += batchSize) {
-    const batch = texts.slice(i, i + batchSize);
+  const { createEmbeddingProviderFromEnv } = await import('./embeddings');
+  const provider = createEmbeddingProviderFromEnv();
 
-    const result = await embedMany({
-      model: asEmbeddingModel<Parameters<typeof embed>[0]['model']>(
-        googleAI.textEmbeddingModel(EMBEDDING_MODEL)
-      ),
-      values: batch,
-    });
-
-    embeddings.push(...result.embeddings.map((e) => Array.from(e)));
-  }
-
-  return embeddings;
+  return provider.embedDocuments(texts);
 }
 
 /**

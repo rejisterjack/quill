@@ -157,18 +157,18 @@ export default function ConfigurationPage() {
                   <EnvRow
                     name="EMBEDDING_DIMENSIONS"
                     required={false}
-                    defaultVal="768"
+                    defaultVal="1024"
                     desc="Vector dimensions (must match DB schema)"
                   />
                   <EnvRow
                     name="GOOGLE_GENERATIVE_AI_API_KEY"
                     required={false}
-                    desc="Required if EMBEDDING_PROVIDER=google"
+                    desc="Optional — only if EMBEDDING_PROVIDER=google"
                   />
                   <EnvRow
                     name="OPENAI_API_KEY"
                     required={false}
-                    desc="Required if EMBEDDING_PROVIDER=openai"
+                    desc="Optional — OpenAI direct; free OpenRouter embeddings reuse OPENROUTER_API_KEY"
                   />
                   <EnvRow
                     name="OLLAMA_BASE_URL"

@@ -37,11 +37,11 @@ import {
 const PRODUCT_KNOWLEDGE = `You are RAG Bot, the official product assistant for rag-starter-kit.
 
 ABOUT THE PRODUCT:
-rag-starter-kit is a production-ready, TypeScript-native, self-hostable RAG (Retrieval-Augmented Generation) chatbot boilerplate. It is built entirely in TypeScript and Next.js, with zero required API costs by default (uses OpenRouter free LLMs and Google Gemini free embeddings).
+rag-starter-kit is a production-ready, TypeScript-native, self-hostable RAG (Retrieval-Augmented Generation) chatbot boilerplate. It is built entirely in TypeScript and Next.js, with zero required API costs by default (uses OpenRouter free models for chat, vision, and embeddings — a single key).
 
 KEY VALUE PROPOSITIONS:
 1. TypeScript all the way down — no Python services needed
-2. Zero-cost AI stack by default — OpenRouter free models + Google Gemini free embeddings
+2. Zero-cost AI stack by default — one OpenRouter key covers chat, vision, and embeddings
 3. Production infrastructure already wired in — auth, file storage, background jobs, monitoring, rate limiting
 4. Real-time and collaborative from the start — multi-user workspaces, typing indicators, presence tracking
 
@@ -51,8 +51,7 @@ TECH STACK:
 - PostgreSQL with pgvector for vector storage
 - Prisma 7 ORM
 - Vercel AI SDK
-- OpenRouter (free LLMs: DeepSeek, Mistral, Llama, Gemma)
-- Google Gemini (free embeddings: gemini-embedding-2)
+- OpenRouter (free LLMs: DeepSeek, Mistral, Llama, Gemma; free vision + embedding models)
 - Inngest for background job processing
 - Upstash Redis for rate limiting
 - NextAuth.js v5 for authentication
@@ -91,12 +90,12 @@ USE CASES:
 
 PRICING:
 - Open source (MIT License)
-- Free to run in development and light production (OpenRouter free tier + Google Gemini free tier)
+- Free to run in development and light production (OpenRouter free tier)
 - No credit card required to get started
 
 GETTING STARTED:
 1. Clone the repository
-2. Copy .env.example to .env and configure managed service keys (OpenRouter, Gemini, Prisma Postgres)
+2. Copy .env.example to .env and configure managed service keys (OpenRouter, Prisma Postgres)
 3. bun install && bun db:migrate
 4. bun dev
 5. Open http://localhost:7392 and start chatting

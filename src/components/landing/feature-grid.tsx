@@ -1,8 +1,7 @@
 'use client';
 
-import { m, useMotionTemplate, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { m, useMotionTemplate, useMotionValue, useTransform } from 'framer-motion';
 import { Bot, Code2, Globe, Layers, Mic, Radio, Shield, Upload, Users, Zap } from 'lucide-react';
-import { useRef } from 'react';
 
 interface Feature {
   icon: React.ElementType;
@@ -104,61 +103,44 @@ const features: Feature[] = [
 ];
 
 function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const smoothMouseX = useSpring(mouseX, { stiffness: 100, damping: 20 });
-  const smoothMouseY = useSpring(mouseY, { stiffness: 100, damping: 20 });
-
-  const rotateX = useTransform(smoothMouseY, [-0.5, 0.5], [10, -10]);
-  const rotateY = useTransform(smoothMouseX, [-0.5, 0.5], [-10, 10]);
-
-  const spotlightX = useTransform(mouseX, [-0.5, 0.5], ['0%', '100%']);
-  const spotlightY = useTransform(mouseY, [-0.5, 0.5], ['0%', '100%']);
+  const spotlightX = useTransform(mouseX, [0, 1], ['0%', '100%']);
+  const spotlightY = useTransform(mouseY, [0, 1], ['0%', '100%']);
 
   const background = useMotionTemplate`radial-gradient(400px circle at ${spotlightX} ${spotlightY}, hsl(var(--primary) / 0.15), transparent 50%)`;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    mouseX.set(x);
-    mouseY.set(y);
-  };
-
-  const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width);
+    mouseY.set((e.clientY - rect.top) / rect.height);
   };
 
   const Icon = feature.icon;
 
   return (
     <m.div
-      ref={cardRef}
-      className="group relative h-full [perspective:1000px] cursor-default"
-      initial={{ opacity: 0, y: 50 }}
+      className="group relative h-full"
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-50px' }}
-      transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.5, delay: (index % 3) * 0.08, ease: [0.16, 1, 0.3, 1] }}
     >
-      <m.div
-        className="glass-panel relative h-full rounded-2xl p-6 sm:p-8 overflow-hidden transition-colors duration-500 border border-border/50 group-hover:border-primary/30"
-        style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
+      <div
+        className="glass-panel relative h-full rounded-2xl p-6 sm:p-8 overflow-hidden transition-colors duration-300 border border-border/50 group-hover:border-primary/30"
         onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        whileHover={{ scale: 1.02 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        onMouseLeave={() => {
+          mouseX.set(0.5);
+          mouseY.set(0.5);
+        }}
       >
         <m.div
           className="absolute inset-0 z-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
           style={{ background }}
         />
 
-        <div className="relative z-10 h-full flex flex-col [transform:translateZ(20px)]">
+        <div className="relative z-10 h-full flex flex-col">
           <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 transition-all duration-300 shadow-[0_0_0_0_hsl(var(--primary)/0)] group-hover:shadow-[0_0_20px_0_hsl(var(--primary)/40)]">
             <Icon className="h-7 w-7" />
           </div>
@@ -183,7 +165,7 @@ function FeatureCard({ feature, index }: { feature: Feature; index: number }) {
             ))}
           </div>
         </div>
-      </m.div>
+      </div>
     </m.div>
   );
 }

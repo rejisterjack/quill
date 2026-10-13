@@ -130,7 +130,8 @@ bun install`}
                         openrouter.ai/keys
                         <span className="sr-only">(opens in new tab)</span>
                       </a>{' '}
-                      and generate a key. Free models are available.
+                      and generate a key. Free models are available — one key covers chat, vision,
+                      and embeddings.
                     </td>
                   </tr>
                   <tr>
@@ -146,7 +147,7 @@ bun install`}
                         aistudio.google.com
                         <span className="sr-only">(opens in new tab)</span>
                       </a>
-                      . Used for vector embeddings.
+                      . Optional — embeddings use OpenRouter's free model by default.
                     </td>
                   </tr>
                   <tr>

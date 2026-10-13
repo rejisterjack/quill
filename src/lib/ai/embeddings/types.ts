@@ -119,6 +119,11 @@ export const OPENAI_MODELS = {
     description: 'Legacy model, use v3 models instead',
     maxTokens: 8191,
   },
+  'liquid/lfm-2.5-embedding-350m:free': {
+    dimensions: 1024,
+    description: 'OpenRouter free tier (LiquidAI LFM2.5-Embedding-350M, 512-token context)',
+    maxTokens: 512,
+  },
 } as const;
 
 /**

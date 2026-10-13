@@ -40,6 +40,10 @@ export const FREE_MODELS = {
 
   // Z.AI GLM 5.2 — capable, occasionally rate-limited
   GLM_5_2: 'z-ai/glm-5.2:free',
+
+  // dots.ocr note-preview — vision-language model for image understanding
+  // (document figures, charts, screenshots). Verified working 2026-10.
+  VISION: 'dots-studio/dots-3-note-preview:free',
 } as const;
 
 /**
@@ -67,9 +71,7 @@ export const defaultOpenRouterConfig: RAGConfig = {
   temperature: 0.7,
   maxTokens: 2000,
   model: DEFAULT_FREE_MODEL,
-  // Note: Embeddings still use OpenAI or local Ollama
-  // OpenRouter doesn't provide free embeddings
-  embeddingModel: 'text-embedding-3-small',
+  embeddingModel: 'liquid/lfm-2.5-embedding-350m:free',
 };
 
 /**
@@ -143,6 +145,14 @@ export function getFreeModelsList() {
       contextWindow: 128000,
     },
   ];
+}
+
+/**
+ * Resolve a vision-capable OpenRouter model for image understanding
+ * (captioning, image chat). Verified working on the free tier 2026-10.
+ */
+export function openRouterVisionModel() {
+  return openrouter(FREE_MODELS.VISION);
 }
 
 /**

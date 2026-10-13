@@ -1,12 +1,10 @@
 'use client';
 
-import { m, useMotionValue, useSpring, useTransform, type Variants } from 'framer-motion';
+import { m, type Variants } from 'framer-motion';
 import { ArrowRight, Github, Sparkles, Terminal, UserPlus } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useTrackEvent } from '@/hooks/use-analytics-event';
-import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { GitHubStats } from './github-stats';
 
 const staggerContainer: Variants = {
@@ -29,73 +27,19 @@ const fadeUp: Variants = {
 };
 
 export function HeroSection(): React.ReactElement {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const prefersReducedMotion = useReducedMotion();
   const { track } = useTrackEvent();
 
-  // Mouse position for parallax
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  // Smooth springs for mouse movement — disabled when prefers-reduced-motion
-  const smoothMouseX = useSpring(mouseX, { stiffness: prefersReducedMotion ? 0 : 50, damping: 20 });
-  const smoothMouseY = useSpring(mouseY, { stiffness: prefersReducedMotion ? 0 : 50, damping: 20 });
-
-  // Transforms for 3D parallax elements — always computed, ranges zeroed when reduced motion
-  const rotateX = useTransform(
-    smoothMouseY,
-    [-0.5, 0.5],
-    prefersReducedMotion ? [0, 0] : [15, -15]
-  );
-  const rotateY = useTransform(
-    smoothMouseX,
-    [-0.5, 0.5],
-    prefersReducedMotion ? [0, 0] : [-15, 15]
-  );
-
-  const bgX = useTransform(smoothMouseX, [-0.5, 0.5], prefersReducedMotion ? [0, 0] : [-50, 50]);
-  const bgY = useTransform(smoothMouseY, [-0.5, 0.5], prefersReducedMotion ? [0, 0] : [-50, 50]);
-
-  // Decorative badge parallax — always computed unconditionally
-  const badgeTopY = useTransform(smoothMouseY, [-0.5, 0.5], [-20, 20]);
-  const badgeBottomY = useTransform(smoothMouseY, [-0.5, 0.5], [20, -20]);
-
-  useEffect(() => {
-    if (prefersReducedMotion) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      mouseX.set(x);
-      mouseY.set(y);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [mouseX, mouseY, prefersReducedMotion]);
-
   return (
-    <section
-      ref={containerRef}
-      className="relative min-h-[95vh] flex items-center justify-center overflow-hidden sm:overflow-visible pt-20 pb-12 lg:pt-32 lg:pb-24 perspective-1000"
-    >
-      {/* Animated interactive background orbs */}
+    <section className="relative min-h-[95vh] flex items-center justify-center overflow-hidden pt-20 pb-12 lg:pt-32 lg:pb-24">
+      {/* Static ambient background orbs (deliberately not mouse-reactive —
+          animating blurred layers forces expensive backdrop re-filtering) */}
       <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
-        <m.div
-          style={{ x: bgX, y: bgY }}
-          className="absolute top-[10%] left-[15%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full"
-        >
+        <div className="absolute top-[10%] left-[15%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full">
           <div className="w-full h-full rounded-full bg-[radial-gradient(circle,hsl(var(--primary)/0.15),transparent_60%)] blur-[80px]" />
-        </m.div>
-
-        <m.div
-          style={{ x: useTransform(bgX, (v) => -v), y: useTransform(bgY, (v) => -v) }}
-          className="absolute bottom-[10%] right-[10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full"
-        >
+        </div>
+        <div className="absolute bottom-[10%] right-[10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full">
           <div className="w-full h-full rounded-full bg-[radial-gradient(circle,hsl(320_100%_60%/0.1),transparent_60%)] blur-[80px]" />
-        </m.div>
+        </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full z-10">
@@ -240,9 +184,8 @@ export function HeroSection(): React.ReactElement {
         <div className="relative mt-16 max-w-4xl mx-auto [perspective:1000px]">
           <m.div
             className="glass-heavy rounded-2xl p-1 relative z-10 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] border border-white/10"
-            style={{ rotateX, rotateY }}
-            initial={{ opacity: 0, y: 100, rotateX: 20 }}
-            animate={{ opacity: 1, y: 0, rotateX: 0 }}
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 1, ease: 'easeOut' }}
           >
             <div className="bg-black/40 rounded-xl p-4 sm:p-6 backdrop-blur-xl">
@@ -322,7 +265,6 @@ export function HeroSection(): React.ReactElement {
           {/* Decorative floating elements */}
           <m.div
             className="absolute -top-6 -right-6 sm:-top-10 sm:-right-10 glass-panel rounded-2xl p-4 z-20 shadow-2xl hidden sm:block"
-            style={{ y: prefersReducedMotion ? 0 : badgeTopY }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 2.2, duration: 0.5 }}
@@ -340,7 +282,6 @@ export function HeroSection(): React.ReactElement {
 
           <m.div
             className="absolute -bottom-6 -left-6 sm:-bottom-10 sm:-left-10 glass-panel rounded-2xl p-4 z-20 shadow-2xl hidden sm:block"
-            style={{ y: prefersReducedMotion ? 0 : badgeBottomY }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 2.4, duration: 0.5 }}

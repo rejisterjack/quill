@@ -4,9 +4,9 @@
  * Central export point for all embedding providers.
  * Provides factory function to create appropriate provider based on config.
  *
- * DEFAULT: Google Gemini (free tier via AI Studio)
- * - text-embedding-004: 768 dimensions, high quality
- * - Get API key: https://aistudio.google.com/app/apikey
+ * DEFAULT: OpenRouter free model (liquid/lfm-2.5-embedding-350m:free, 1024 dims)
+ * via EMBEDDING_PROVIDER=openai + EMBEDDING_BASE_URL=https://openrouter.ai/api/v1.
+ * Google Gemini and Ollama remain available via EMBEDDING_PROVIDER.
  */
 
 import { logger } from '@/lib/logger';
@@ -82,9 +82,12 @@ let cachedDefaultProvider: EmbeddingProvider | null = null;
  * re-creating the provider on every call.
  *
  * Environment variables:
- * - EMBEDDING_PROVIDER: 'google', 'openai', or 'ollama' (default: 'google')
- * - EMBEDDING_MODEL: Model name (default: text-embedding-004 for Google)
+ * - EMBEDDING_PROVIDER: 'openai', 'google', or 'ollama' (default: 'google')
+ * - EMBEDDING_MODEL: Model name (default: text-embedding-3-small for OpenAI)
+ * - EMBEDDING_BASE_URL: Base URL for OpenAI-compatible endpoints (e.g. https://openrouter.ai/api/v1)
+ * - EMBEDDING_API_KEY: API key for the embedding endpoint
  * - OPENAI_API_KEY: OpenAI API key (if using OpenAI)
+ * - OPENROUTER_API_KEY: used automatically when EMBEDDING_BASE_URL points at openrouter.ai
  * - OLLAMA_BASE_URL: Ollama base URL (if using Ollama)
  */
 export function createEmbeddingProviderFromEnv(
@@ -137,7 +140,17 @@ export function createEmbeddingProviderFromEnv(
         );
       }
 
-      result = createOpenAIProvider(model, overrides?.apiKey ?? process.env.OPENAI_API_KEY);
+      const baseUrl = overrides?.baseUrl ?? process.env.EMBEDDING_BASE_URL;
+
+      // OpenRouter-compatible setup: EMBEDDING_BASE_URL pointing at openrouter.ai
+      // reuses OPENROUTER_API_KEY when no dedicated key is configured.
+      const apiKey =
+        overrides?.apiKey ??
+        process.env.EMBEDDING_API_KEY ??
+        process.env.OPENAI_API_KEY ??
+        (baseUrl?.includes('openrouter.ai') ? process.env.OPENROUTER_API_KEY : undefined);
+
+      result = createOpenAIProvider(model, apiKey, baseUrl);
       break;
     }
 
@@ -319,7 +332,7 @@ export function getModelDimensions(
  * Used at startup to validate that the configured embedding model's output
  * matches the vector column dimension in the Prisma schema.
  */
-const SCHEMA_VECTOR_DIMENSION = 768; // Must match `vector(768)` in prisma/schema.prisma
+const SCHEMA_VECTOR_DIMENSION = 1024; // Must match `vector` column dimension in prisma/migrations
 
 const PROVIDER_MODEL_DIMENSIONS: Record<string, Record<string, number>> = {
   google: Object.fromEntries(Object.entries(GOOGLE_MODELS).map(([k, v]) => [k, v.dimensions])),
@@ -374,7 +387,7 @@ export function validateEmbeddingDimensions(
         `Embedding dimension mismatch: "${effectiveProvider}/${resolvedModel}" produces ` +
         `${modelDims}D vectors, but the database schema uses vector(${SCHEMA_VECTOR_DIMENSION}). ` +
         `To fix this:\n` +
-        `  1. Change EMBEDDING_PROVIDER/MODEL to a ${SCHEMA_VECTOR_DIMENSION}D model (e.g. google/text-embedding-004 or ollama/nomic-embed-text), OR\n` +
+        `  1. Change EMBEDDING_PROVIDER/MODEL to a ${SCHEMA_VECTOR_DIMENSION}D model (e.g. openai/liquid/lfm-2.5-embedding-350m:free or ollama/nomic-embed-text), OR\n` +
         `  2. Run a migration: ALTER TABLE document_chunks ALTER COLUMN embedding TYPE vector(${modelDims});\n` +
         `  3. Update SCHEMA_VECTOR_DIMENSION in src/lib/ai/embeddings/index.ts to ${modelDims}.`,
     };

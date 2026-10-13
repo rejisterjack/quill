@@ -87,13 +87,10 @@ export default function LlmProvidersPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-3">Google Gemini</h2>
             <p className="text-muted-foreground mb-3">
-              Use Gemini models for both chat and embeddings.
+              Optional Gemini models for chat. The key is not required — chat, vision, and
+              embeddings all default to OpenRouter free models.
             </p>
             <Code title=".env">{`GOOGLE_GENERATIVE_AI_API_KEY=AIza...`}</Code>
-            <p className="text-muted-foreground text-sm">
-              Free tier includes generous usage limits. Works for both embedding and chat when
-              configured.
-            </p>
           </section>
 
           <section>

@@ -35,13 +35,13 @@ export function GET() {
   lines.push('git clone https://github.com/rejisterjack/rag-starter-kit.git');
   lines.push('cd rag-starter-kit');
   lines.push('bun install');
-  lines.push('cp .env.example .env  # add DATABASE_URL, Gemini or OpenRouter key');
+  lines.push('cp .env.example .env  # add DATABASE_URL and OPENROUTER_API_KEY');
   lines.push('bun run db:migrate && bun run db:seed');
   lines.push('bun run dev');
   lines.push('```');
   lines.push('');
   lines.push(
-    'The app runs on http://localhost:7392. Free-tier AI (OpenRouter free models + Google Gemini embeddings) requires no paid API keys.'
+    'The app runs on http://localhost:7392. Free-tier AI (OpenRouter free models for chat, vision, and embeddings) requires no paid API keys.'
   );
   lines.push('');
   lines.push('## Documentation');

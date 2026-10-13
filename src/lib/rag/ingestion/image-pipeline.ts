@@ -179,16 +179,16 @@ export async function uploadImageToStorage(
 
 /**
  * Generate caption for image using vision-language model
- * Uses Google Gemini Vision API
+ * Uses OpenRouter free vision model (dots.ocr note-preview)
  *
  * @param imageBuffer - Image buffer or URL
  * @returns Generated caption
  */
 export async function generateImageCaption(imageBuffer: Buffer | string): Promise<string> {
   try {
-    const { createGoogleGenerativeAI } = await import('@ai-sdk/google');
     const ai = await import('ai');
     const { generateText } = ai;
+    const { openRouterVisionModel } = await import('@/lib/ai/openrouter');
 
     // Convert buffer to base64 if needed
     let imageData: string;
@@ -199,10 +199,8 @@ export async function generateImageCaption(imageBuffer: Buffer | string): Promis
       imageData = `data:image/png;base64,${base64}`;
     }
 
-    const googleAI = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY });
-
     const result = await generateText({
-      model: asModel<Parameters<typeof generateText>[0]['model']>(googleAI('gemini-1.5-flash')),
+      model: asModel<Parameters<typeof generateText>[0]['model']>(openRouterVisionModel()),
       messages: [
         {
           role: 'user',
@@ -215,6 +213,7 @@ export async function generateImageCaption(imageBuffer: Buffer | string): Promis
           ],
         },
       ],
+      maxTokens: 1500,
     });
 
     return result.text;

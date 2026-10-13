@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PWAScripts } from '@/components/pwa/pwa-scripts';
-import { CsrfTokenScript } from '@/lib/security/csrf';
+import { CsrfTokenScript } from '@/lib/security/csrf-client';
 
 /**
  * Client-side scripts for PWA and CSRF initialization.

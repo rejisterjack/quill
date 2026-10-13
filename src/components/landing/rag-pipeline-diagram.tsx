@@ -98,15 +98,14 @@ export function RagPipelineDiagram(): React.ReactElement {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {/* Dynamic Background Glow based on active stage */}
+      {/* Dynamic Background Glow based on active stage (static, blurred once) */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-3xl z-10" />
-        <m.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] opacity-20"
-          animate={{
-            background: `radial-gradient(circle, rgb(\${stages[activeIndex]?.color || '0,0,0'}) 0%, transparent 70%)`,
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] opacity-10"
+          style={{
+            background: `radial-gradient(circle, rgb(${stages[activeIndex]?.color || '0,0,0'}) 0%, transparent 70%)`,
+            transition: 'background 600ms ease',
           }}
-          transition={{ duration: 1 }}
         />
       </div>
 
@@ -177,7 +176,7 @@ export function RagPipelineDiagram(): React.ReactElement {
                   onClick={() => setActiveStage(stage.id)}
                 >
                   <m.div
-                    className={`h-full text-center glass-panel rounded-2xl p-5 transition-all duration-300 \${
+                    className={`h-full text-center glass-panel rounded-2xl p-5 transition-all duration-300 ${
                       isActive
                         ? 'border border-primary/50 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] bg-background/80'
                         : 'border border-border/50 hover:border-border'
@@ -191,7 +190,7 @@ export function RagPipelineDiagram(): React.ReactElement {
                     {/* Stage number */}
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                       <m.div
-                        className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center shadow-lg transition-colors duration-500 \${
+                        className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center shadow-lg transition-colors duration-500 ${
                           isActive || activeIndex > index
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted text-muted-foreground'
@@ -207,20 +206,20 @@ export function RagPipelineDiagram(): React.ReactElement {
                     <div
                       className="mx-auto mb-4 mt-2 inline-flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-500 relative"
                       style={{
-                        backgroundColor: isActive ? `rgba(\${stage.color}, 0.15)` : '',
-                        color: isActive ? `rgb(\${stage.color})` : '',
+                        backgroundColor: isActive ? `rgba(${stage.color}, 0.15)` : '',
+                        color: isActive ? `rgb(${stage.color})` : '',
                       }}
                     >
                       {isActive && (
                         <m.div
                           className="absolute inset-0 rounded-xl"
-                          style={{ border: `1px solid rgba(\${stage.color}, 0.5)` }}
+                          style={{ border: `1px solid rgba(${stage.color}, 0.5)` }}
                           animate={{ opacity: [0.5, 1, 0.5] }}
                           transition={{ duration: 2, repeat: Infinity }}
                         />
                       )}
                       <stage.icon
-                        className={`h-6 w-6 \${!isActive ? 'text-muted-foreground group-hover:text-foreground transition-colors' : ''}`}
+                        className={`h-6 w-6 ${!isActive ? 'text-muted-foreground group-hover:text-foreground transition-colors' : ''}`}
                       />
                     </div>
 
@@ -237,7 +236,7 @@ export function RagPipelineDiagram(): React.ReactElement {
                     {isActive && (
                       <m.div
                         className="hidden lg:block absolute -bottom-8 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[10px]"
-                        style={{ borderBottomColor: `rgba(\${stage.color}, 0.3)` }}
+                        style={{ borderBottomColor: `rgba(${stage.color}, 0.3)` }}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
@@ -262,28 +261,28 @@ export function RagPipelineDiagram(): React.ReactElement {
                   transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                   className="glass-heavy rounded-3xl p-6 sm:p-8 border overflow-hidden relative"
                   style={{
-                    borderColor: `rgba(\${stages[activeIndex].color}, 0.3)`,
-                    boxShadow: `0 20px 40px -20px rgba(\${stages[activeIndex].color}, 0.15)`,
+                    borderColor: `rgba(${stages[activeIndex].color}, 0.3)`,
+                    boxShadow: `0 20px 40px -20px rgba(${stages[activeIndex].color}, 0.15)`,
                   }}
                 >
                   <div
                     className="absolute top-0 left-0 w-full h-1"
                     style={{
-                      background: `linear-gradient(90deg, transparent, rgba(\${stages[activeIndex].color}, 0.8), transparent)`,
+                      background: `linear-gradient(90deg, transparent, rgba(${stages[activeIndex].color}, 0.8), transparent)`,
                     }}
                   />
 
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                     <div
                       className="shrink-0 h-16 w-16 rounded-2xl flex items-center justify-center relative shadow-lg"
-                      style={{ backgroundColor: `rgba(\${stages[activeIndex].color}, 0.15)` }}
+                      style={{ backgroundColor: `rgba(${stages[activeIndex].color}, 0.15)` }}
                     >
                       {(() => {
                         const StageIcon = stages[activeIndex].icon;
                         return (
                           <StageIcon
                             className="h-8 w-8"
-                            style={{ color: `rgb(\${stages[activeIndex].color})` }}
+                            style={{ color: `rgb(${stages[activeIndex].color})` }}
                           />
                         );
                       })()}

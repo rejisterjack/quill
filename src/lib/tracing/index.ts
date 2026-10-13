@@ -110,7 +110,7 @@ export const tracing = {
   async embedDocuments(documents: string[], fn: () => Promise<number[][]>): Promise<number[][]> {
     return withSpan('embeddings.documents', async (span) => {
       span.setAttribute('embedding.count', documents.length);
-      span.setAttribute('embedding.model', process.env.EMBEDDING_MODEL || 'text-embedding-004');
+      span.setAttribute('embedding.model', process.env.EMBEDDING_MODEL || 'liquid/lfm-2.5-embedding-350m:free');
       const startTime = Date.now();
       const result = await fn();
       span.setAttribute('embedding.duration_ms', Date.now() - startTime);

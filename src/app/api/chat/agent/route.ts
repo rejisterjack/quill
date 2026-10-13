@@ -75,7 +75,7 @@ const defaultConfig: RAGConfig = {
   temperature: 0.7,
   maxTokens: 2000,
   model: 'auto', // Dynamic — resolved at call time via model discovery
-  embeddingModel: 'text-embedding-004',
+  embeddingModel: 'liquid/lfm-2.5-embedding-350m:free',
 };
 
 const REACT_THRESHOLD = 0.6;

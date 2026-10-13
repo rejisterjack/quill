@@ -103,8 +103,11 @@ export function ChatSimulator(): React.ReactElement {
 
   return (
     <section id="chat-simulator" className="py-24 lg:py-32 relative">
-      {/* Decorative background glows */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/5 rounded-[100%] blur-[100px] -z-10 pointer-events-none" />
+      {/* Static decorative background glow */}
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/5 rounded-[100%] blur-[100px] -z-10 pointer-events-none"
+        aria-hidden="true"
+      />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <m.div

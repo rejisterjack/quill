@@ -5,8 +5,8 @@
  * Supports text + image inputs for comprehensive document understanding.
  */
 
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { type CoreMessage, generateText, type LanguageModel, streamText } from 'ai';
+import { FREE_MODELS, openRouterVisionModel } from '@/lib/ai/openrouter';
 import { asModel } from '@/lib/ai/types';
 import { apiError, apiSuccess } from '@/lib/api-response';
 import { AuditEvent, logAuditEvent } from '@/lib/audit/audit-logger';
@@ -200,7 +200,7 @@ export async function POST(req: Request) {
       const response = result.toTextStreamResponse({
         headers: {
           'X-Retrieved-Images': JSON.stringify(sourcesMetadata),
-          'X-Model-Used': 'gemini-1.5-flash',
+          'X-Model-Used': FREE_MODELS.VISION,
         },
       });
 
@@ -240,7 +240,7 @@ export async function POST(req: Request) {
           completionTokens: result.usage?.completionTokens ?? 0,
           totalTokens: result.usage?.totalTokens ?? 0,
         },
-        model: 'gemini-1.5-flash',
+        model: FREE_MODELS.VISION,
       });
 
       addRateLimitHeaders(jsonResponse.headers, rateLimitResult);
@@ -268,10 +268,7 @@ function base64ToBuffer(base64: string): Buffer {
  * Get the vision model — typed wrapper to avoid `as any` casts
  */
 function getVisionModel(): LanguageModel {
-  const googleAI = createGoogleGenerativeAI({
-    apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-  });
-  return asModel<LanguageModel>(googleAI('gemini-1.5-flash'));
+  return asModel<LanguageModel>(openRouterVisionModel());
 }
 
 /**

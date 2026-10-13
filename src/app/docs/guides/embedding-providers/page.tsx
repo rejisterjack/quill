@@ -7,7 +7,7 @@ import { DocsShell } from '@/components/docs/docs-shell';
 export const metadata: Metadata = {
   title: 'Embedding Providers',
   description:
-    'Configure Google Gemini, OpenAI, or Ollama for document embeddings in the RAG Starter Kit.',
+    'Configure OpenRouter, Google Gemini, OpenAI, or Ollama for document embeddings in the RAG Starter Kit.',
 };
 
 function Code({ children, title }: { children: string; title?: string }) {
@@ -30,14 +30,15 @@ export default function EmbeddingProvidersPage() {
     <DocsShell
       path="/docs/guides/embedding-providers"
       title="Embedding Providers"
-      description="How to configure and switch embedding providers (Gemini, OpenAI, Ollama)."
-      lastModified="2026-08-25"
+      description="How to configure and switch embedding providers (OpenRouter, Gemini, OpenAI, Ollama)."
+      lastModified="2026-10-13"
     >
       <div>
         <h1 className="text-3xl font-bold tracking-tight mb-4">Embedding Providers</h1>
         <p className="text-lg text-muted-foreground mb-8">
-          The RAG Starter Kit supports three embedding providers. The default is Google Gemini (free
-          tier, 768D), which works out of the box with the database schema.
+          The RAG Starter Kit supports several embedding providers. The default is OpenRouter&apos;s
+          free embedding model (1024D), which works out of the box with the database schema — no
+          extra API key beyond <code className="bg-muted px-1 rounded text-sm">OPENROUTER_API_KEY</code>.
         </p>
 
         <div className="space-y-10">
@@ -56,11 +57,18 @@ export default function EmbeddingProvidersPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   <tr>
+                    <td className="px-4 py-2">OpenRouter (default)</td>
+                    <td className="px-4 py-2 font-mono text-xs">liquid/lfm-2.5-embedding-350m:free</td>
+                    <td className="px-4 py-2">1024</td>
+                    <td className="px-4 py-2 text-green-600">Free</td>
+                    <td className="px-4 py-2">Reuses OPENROUTER_API_KEY</td>
+                  </tr>
+                  <tr>
                     <td className="px-4 py-2">Google Gemini</td>
-                    <td className="px-4 py-2 font-mono text-xs">text-embedding-004</td>
+                    <td className="px-4 py-2 font-mono text-xs">gemini-embedding-2</td>
                     <td className="px-4 py-2">768</td>
                     <td className="px-4 py-2 text-green-600">Free (1,500/day)</td>
-                    <td className="px-4 py-2">API key only</td>
+                    <td className="px-4 py-2">API key + migration</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2">OpenAI</td>
@@ -82,13 +90,35 @@ export default function EmbeddingProvidersPage() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3">Google Gemini (Default)</h2>
+            <h2 className="text-2xl font-semibold mb-3">OpenRouter (Default)</h2>
             <p className="text-muted-foreground mb-3">
-              No configuration needed beyond the API key. Produces 768D vectors matching the
-              database schema.
+              Uses OpenRouter&apos;s free{' '}
+              <code className="bg-muted px-1 rounded text-sm">liquid/lfm-2.5-embedding-350m:free</code>{' '}
+              model, producing 1024D vectors matching the database schema. It reuses your existing{' '}
+              <code className="bg-muted px-1 rounded text-sm">OPENROUTER_API_KEY</code> — no
+              additional signup needed.
+            </p>
+            <Code title=".env">{`OPENROUTER_API_KEY=sk-or-v1-...
+EMBEDDING_PROVIDER=openai
+EMBEDDING_MODEL=liquid/lfm-2.5-embedding-350m:free
+EMBEDDING_DIMENSIONS=1024
+EMBEDDING_BASE_URL=https://openrouter.ai/api/v1`}</Code>
+            <p className="text-muted-foreground text-sm">
+              Any OpenAI-compatible endpoint also works: point{' '}
+              <code className="bg-muted px-1 rounded text-sm">EMBEDDING_BASE_URL</code> at it and set{' '}
+              <code className="bg-muted px-1 rounded text-sm">EMBEDDING_API_KEY</code>.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-3">Google Gemini</h2>
+            <p className="text-muted-foreground mb-3">
+              Produces 768D vectors. <strong>You must run a database migration</strong> to change the
+              vector column from 1024 to 768 dimensions before switching.
             </p>
             <Code title=".env">{`GOOGLE_GENERATIVE_AI_API_KEY=your-gemini-api-key
-EMBEDDING_PROVIDER=google`}</Code>
+EMBEDDING_PROVIDER=google
+EMBEDDING_DIMENSIONS=768`}</Code>
             <p className="text-muted-foreground text-sm">
               Get a free API key at{' '}
               <a
@@ -104,11 +134,11 @@ EMBEDDING_PROVIDER=google`}</Code>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-3">OpenAI</h2>
+            <h2 className="text-2xl font-semibold mb-3">OpenAI (Direct)</h2>
             <p className="text-muted-foreground mb-3">
               OpenAI embeddings produce 1536-dimensional vectors.{' '}
               <strong>You must run a database migration</strong> to change the vector column from
-              768 to 1536 dimensions before switching.
+              1024 to 1536 dimensions before switching.
             </p>
             <Code title=".env">{`EMBEDDING_PROVIDER=openai
 EMBEDDING_MODEL=text-embedding-3-small
@@ -127,7 +157,8 @@ OPENAI_API_KEY=sk-...`}</Code>
             <p className="text-muted-foreground mb-3">
               Run embeddings locally with Ollama. The{' '}
               <code className="bg-muted px-1 rounded text-sm">nomic-embed-text</code> model produces
-              768D vectors compatible with the default schema.
+              768D vectors — run a migration to shrink the vector column (default is 1024D) before
+              switching.
             </p>
             <Code title=".env">{`EMBEDDING_PROVIDER=ollama
 EMBEDDING_MODEL=nomic-embed-text

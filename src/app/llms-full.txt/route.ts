@@ -27,8 +27,8 @@ The dev server runs on port 7392. Enable the pgvector extension in your database
 
 - DATABASE_URL — PostgreSQL connection string (pgvector enabled)
 - AUTH_SECRET — session signing key (required in production)
-- OPENROUTER_API_KEY or GOOGLE_GENERATIVE_AI_API_KEY — free-tier LLM access
-- GEMINI_API_KEY or OPENAI_API_KEY — embeddings (Gemini free tier: 1,500 req/day)
+- OPENROUTER_API_KEY — free-tier chat, vision, and embeddings
+- GOOGLE_GENERATIVE_AI_API_KEY — optional (Gemini chat models via BYOK, or EMBEDDING_PROVIDER=google)
 - NEXT_PUBLIC_APP_URL — canonical site URL used for metadata and sitemap
 - NEXT_PUBLIC_POSTHOG_KEY — optional product analytics
 
@@ -56,8 +56,8 @@ Auth: session cookie or X-API-Key. Rate-limited per user.`,
 All endpoints require authentication and workspace membership.`,
     '/docs/api/embeddings': `POST /api/public/ingest and internal embedding pipeline.
 
-Default provider: Google Gemini text-embedding (free tier, 1,500 requests/day). OpenAI-compatible endpoints are supported by setting OPENAI_API_KEY. Dimension must match the pgvector column (1536 by default); switching providers after ingestion requires re-embedding existing documents.`,
-    '/docs/guides/embedding-providers': `Swappable embedding providers: Google Gemini (free tier), OpenAI, and any OpenAI-compatible endpoint (Ollama, Azure, self-hosted). Configure per workspace in Settings → RAG. Re-embed documents after changing dimensions or models — vectors with mismatched dimensions are rejected by pgvector.`,
+Default provider: OpenRouter free embedding model (liquid/lfm-2.5-embedding-350m:free, 1024 dimensions) via OPENROUTER_API_KEY. Any OpenAI-compatible endpoint works by setting EMBEDDING_BASE_URL/EMBEDDING_API_KEY. Dimension must match the pgvector column (1024 by default); switching providers after ingestion requires re-embedding existing documents.`,
+    '/docs/guides/embedding-providers': `Swappable embedding providers: OpenRouter free models (default), Google Gemini (free tier), OpenAI, and any OpenAI-compatible endpoint (Ollama, Azure, self-hosted) via EMBEDDING_BASE_URL. Re-embed documents after changing dimensions or models — vectors with mismatched dimensions are rejected by pgvector.`,
     '/docs/guides/llm-providers': `Chat providers, all via the Vercel AI SDK: OpenRouter (default; free models include Gemma, Llama, GPT-OSS, Hermes), Google Gemini, OpenAI, Anthropic, and local Ollama. Bring-your-own-key per workspace. Streaming works identically across providers through a single SSE contract.`,
     '/docs/guides/deployment': `Targets: Vercel (recommended; standalone output, 2-minute deploy), Railway, Render, and any Node 20+ host. Run \`bun run build\` then \`bun run start\`, or use the standalone output in ./next. Apply migrations with \`bun run db:migrate:prod\`. Set NEXT_PUBLIC_APP_URL to the production origin so canonical URLs, sitemap, and OG tags resolve correctly.`,
     '/docs/guides/authentication': `NextAuth v5 with credentials, GitHub and Google OAuth, TOTP MFA, and SAML SSO (workspace-scoped). Roles: USER, MEMBER, ADMIN, OWNER with workspace-scoped RBAC. Session cookies are httpOnly; API routes also accept X-API-Key with workspace-scoped permissions.`,

@@ -32,7 +32,7 @@ export const defaultRAGConfig: RAGConfig = {
   temperature: 0.7,
   maxTokens: 2000,
   model: process.env.DEFAULT_MODEL || 'auto', // Dynamic — resolved via model discovery
-  embeddingModel: process.env.EMBEDDING_MODEL || 'text-embedding-004',
+  embeddingModel: process.env.EMBEDDING_MODEL || 'liquid/lfm-2.5-embedding-350m:free',
 };
 
 // ============================================================================

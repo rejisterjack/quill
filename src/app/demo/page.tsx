@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { fetchWithCsrf } from '@/lib/security/csrf';
+import { fetchWithCsrf } from '@/lib/security/csrf-client';
 
 export default function DemoPage(): React.ReactElement {
   const [messages, setMessages] = useState<Array<{ id: string; role: string; content: string }>>([

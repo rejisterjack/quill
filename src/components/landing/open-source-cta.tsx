@@ -59,41 +59,25 @@ export function OpenSourceCTA(): React.ReactElement {
           whileInView={{ opacity: 1, y: 0, scale: 1 }}
           viewport={{ once: true, margin: '-100px' }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#0a0a0a]/80 backdrop-blur-3xl p-8 sm:p-16 lg:p-20 text-center mb-24 shadow-[0_0_80px_-20px_rgba(0,0,0,0.5)]"
+          className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#0a0a0a] p-8 sm:p-16 lg:p-20 text-center mb-24 shadow-[0_0_80px_-20px_rgba(0,0,0,0.5)]"
         >
-          {/* Animated Background Gradients inside the card */}
+          {/* Static gradient glows (deliberately not animated — animating blurred
+              layers inside a large card keeps the GPU busy continuously) */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <m.div
-              className="absolute top-[-50%] left-[-10%] w-[80%] h-[150%] rounded-full opacity-30"
+            <div
+              className="absolute top-[-50%] left-[-10%] w-[80%] h-[150%] rounded-full opacity-20"
               style={{
                 background: 'radial-gradient(circle, hsl(var(--primary)), transparent 60%)',
                 filter: 'blur(80px)',
               }}
-              animate={{
-                transform: [
-                  'translate(0%, 0%) rotate(0deg)',
-                  'translate(5%, 5%) rotate(5deg)',
-                  'translate(0%, 0%) rotate(0deg)',
-                ],
-              }}
-              transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <m.div
-              className="absolute bottom-[-50%] right-[-10%] w-[70%] h-[130%] rounded-full opacity-20"
+            <div
+              className="absolute bottom-[-50%] right-[-10%] w-[70%] h-[130%] rounded-full opacity-10"
               style={{
                 background: 'radial-gradient(circle, hsl(320 100% 60%), transparent 60%)',
                 filter: 'blur(100px)',
               }}
-              animate={{
-                transform: [
-                  'translate(0%, 0%) rotate(0deg)',
-                  'translate(-5%, -5%) rotate(-5deg)',
-                  'translate(0%, 0%) rotate(0deg)',
-                ],
-              }}
-              transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut', delay: -5 }}
             />
-            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
           </div>
 
           <div className="relative z-10">
@@ -234,11 +218,11 @@ export function OpenSourceCTA(): React.ReactElement {
             {contributionWays.map((way, index) => (
               <m.div
                 key={way.title}
-                className="group glass-heavy rounded-2xl p-6 border border-border/50 hover:border-primary/40 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.3)] interactive cursor-default"
+                className="group glass-heavy rounded-2xl p-6 border border-border/50 hover:border-primary/40 transition-colors duration-300 cursor-default"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.5, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
               >
                 <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 transition-all duration-300 shadow-inner">
                   <way.icon className="h-6 w-6" />

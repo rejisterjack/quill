@@ -173,12 +173,15 @@
   }
 }
 
-/* Glassmorphism Utilities (Apple Spatial Design) */
+/* Glassmorphism Utilities (Apple Spatial Design)
+   NOTE: backdrop-filter is expensive — every glass element must re-sample the
+   backdrop whenever anything behind it repaints. Keep blur radii modest and
+   avoid stacking glass on top of animated/blurry layers. */
 @layer utilities {
   .glass-light {
     background: hsl(var(--glass));
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid hsl(var(--glass-border));
     box-shadow:
       0 4px 24px -1px rgba(0, 0, 0, 0.1),
@@ -187,8 +190,8 @@
 
   .glass-heavy {
     background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--background) / 0.3) 100%);
-    backdrop-filter: blur(16px) saturate(150%);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid hsl(var(--glass-border));
     box-shadow:
       0 8px 32px -4px rgba(0, 0, 0, 0.2),
@@ -196,9 +199,9 @@
   }
 
   .glass-panel {
-    background: hsl(var(--glass) / 0.7);
-    backdrop-filter: blur(12px) saturate(130%);
-    -webkit-backdrop-filter: blur(12px) saturate(130%);
+    background: hsl(var(--glass) / 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid hsl(var(--glass-border));
     box-shadow: 0 8px 24px -8px rgba(0, 0, 0, 0.25);
   }
@@ -220,10 +223,11 @@
     content: '';
     position: absolute;
     border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.35;
-    will-change: transform;
-    animation: float 30s infinite ease-in-out alternate;
+    filter: blur(80px);
+    opacity: 0.3;
+    /* Deliberately NOT animated: animating a 100px-blur layer re-filters it
+       every frame, which also forces every backdrop-filter (glass) element
+       on the page to re-sample its backdrop — a major source of scroll jank. */
   }
 
   .vibrant-bg::before {
@@ -240,16 +244,6 @@
     width: 50vw;
     height: 50vw;
     background: radial-gradient(circle, hsl(320 100% 60% / 0.15), transparent 70%);
-    animation-delay: -15s;
-  }
-
-  @keyframes float {
-    0% {
-      transform: translate(0, 0) scale(1);
-    }
-    100% {
-      transform: translate(3%, 3%) scale(1.05);
-    }
   }
 
   .text-gradient {
@@ -523,13 +517,13 @@
   animation: shimmer 2s ease-in-out infinite;
 }
 
-/* Marquee Animations for Tech Stack */
+/* Marquee Animations for Tech Stack (slower = cheaper; the strip is large) */
 .animate-marquee {
-  animation: marquee 40s linear infinite;
+  animation: marquee 70s linear infinite;
 }
 
 .animate-marquee-reverse {
-  animation: marquee-reverse 40s linear infinite;
+  animation: marquee-reverse 70s linear infinite;
 }
 
 @keyframes marquee {
@@ -547,6 +541,19 @@
   }
   100% {
     transform: translateX(0);
+  }
+}
+
+/* Route-change progress sweep */
+@keyframes nav-progress-sweep {
+  0% {
+    transform: scaleX(0);
+  }
+  60% {
+    transform: scaleX(0.7);
+  }
+  100% {
+    transform: scaleX(1);
   }
 }
 
@@ -573,12 +580,6 @@ html {
   .animate-marquee-reverse,
   .animate-shimmer {
     animation: none;
-  }
-
-  .vibrant-bg::before,
-  .vibrant-bg::after {
-    animation: none;
-    opacity: 0.15;
   }
 
   /* Disable hover spotlight effect */

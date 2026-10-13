@@ -24,7 +24,7 @@ const ragSettingsSchema = z.object({
   similarityThreshold: z.number().min(0).max(1).default(0.7),
   temperature: z.number().min(0).max(2).default(0.7),
   maxTokens: z.number().min(256).max(8192).default(2000),
-  embeddingModel: z.string().default('text-embedding-004'),
+  embeddingModel: z.string().default('liquid/lfm-2.5-embedding-350m:free'),
   rerankingEnabled: z.boolean().default(false),
   hybridSearchEnabled: z.boolean().default(true),
   chunkingStrategy: z.enum(['fixed', 'semantic', 'hierarchical', 'late']).default('fixed'),

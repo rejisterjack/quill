@@ -6,7 +6,7 @@ import type { Source } from '@/components/chat/citations';
 import type { Message } from '@/components/chat/message-item';
 import { getSelectedModel } from '@/hooks/use-selected-model';
 import { apiFetch } from '@/lib/api-client';
-import { fetchWithCsrf } from '@/lib/security/csrf';
+import { fetchWithCsrf } from '@/lib/security/csrf-client';
 
 export interface UseChatOptions {
   conversationId?: string;

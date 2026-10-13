@@ -68,13 +68,13 @@ const sections: { title: string; vars: EnvVar[] }[] = [
       {
         name: 'EMBEDDING_DIMENSIONS',
         required: false,
-        default: '768',
+        default: '1024',
         description: 'Vector dimensions (must match DB schema)',
       },
       {
         name: 'GOOGLE_GENERATIVE_AI_API_KEY',
         required: false,
-        description: 'Google Gemini API key (required for google provider)',
+        description: 'Google Gemini API key (optional; only for EMBEDDING_PROVIDER=google)',
       },
       {
         name: 'OPENAI_API_KEY',
