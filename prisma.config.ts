@@ -1,16 +1,15 @@
-import 'dotenv/config';
-import { defineConfig, env } from 'prisma/config';
+import "dotenv/config";
+import { defineConfig } from "prisma/config";
 
-// Prisma 7 configuration
-// - datasource.url: used by Prisma Migrate (CLI) for running migrations
-// - The PrismaClient at runtime uses @prisma/adapter-pg (see src/lib/db/client.ts)
+const rawUrl = process.env.DATABASE_URL || "";
+const directUrl = rawUrl
+  .replace("-pooler", "")
+  .replace("&channel_binding=require", "")
+  .replace("?channel_binding=require", "?");
+
 export default defineConfig({
-  schema: 'prisma/schema.prisma',
-  migrations: {
-    path: 'prisma/migrations',
-    seed: 'tsx prisma/seed.ts',
-  },
+  schema: "prisma/schema.prisma",
   datasource: {
-    url: env('DIRECT_URL'),
+    url: directUrl || rawUrl,
   },
 });
