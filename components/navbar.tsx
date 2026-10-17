@@ -65,6 +65,30 @@ export const Navbar = () => {
                 <span>Admin Portal</span>
               </NextLink>
             </li>
+            <li>
+              <NextLink
+                href="/docs"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+                  pathname === "/docs"
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                    : "text-default-600 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-50/50"
+                }`}
+              >
+                <span>Docs</span>
+              </NextLink>
+            </li>
+            <li>
+              <NextLink
+                href="/pricing"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+                  pathname === "/pricing"
+                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                    : "text-default-600 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-50/50"
+                }`}
+              >
+                <span>Pricing</span>
+              </NextLink>
+            </li>
           </ul>
         </div>
 

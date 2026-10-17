@@ -2,6 +2,7 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
+import NextLink from "next/link";
 import { Navbar } from "@/components/navbar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -28,14 +29,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>PostgreSQL + pgvector • 100% TypeScript • $0 Recurring Cost</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <NextLink href="/docs" className="hover:text-primary transition-colors">
+              Docs
+            </NextLink>
+            <span>•</span>
+            <NextLink href="/pricing" className="hover:text-primary transition-colors">
+              Pricing
+            </NextLink>
+            <span>•</span>
+            <NextLink href="/about" className="hover:text-primary transition-colors">
+              About
+            </NextLink>
+            <span>•</span>
+            <NextLink href="/blog" className="hover:text-primary transition-colors">
+              Blog
+            </NextLink>
+            <span>•</span>
             <a
               href="https://github.com/rejisterjack/rag-starter-kit"
               target="_blank"
               rel="noreferrer"
               className="hover:text-primary transition-colors"
             >
-              GitHub Repository
+              GitHub
             </a>
             <span>•</span>
             <a
@@ -44,7 +61,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               rel="noreferrer"
               className="hover:text-primary transition-colors font-medium text-foreground"
             >
-              HeroUI Design System
+              HeroUI
             </a>
           </div>
         </div>
