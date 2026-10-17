@@ -8,12 +8,19 @@ import { checkRateLimit } from "@/lib/rate-limit";
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();
-    const clientIp = req.headers.get("x-forwarded-for") || user?.id || "127.0.0.1";
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized: Please sign in to send messages." }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const clientIp = req.headers.get("x-forwarded-for") || user.id || "127.0.0.1";
     const rateLimit = checkRateLimit(`chat_${clientIp}`, { limit: 40, windowMs: 60 * 1000 });
     if (!rateLimit.success) {
       await prisma.auditLog.create({
         data: {
-          userId: user?.id,
+          userId: user.id,
           event: "RATE_LIMIT_HIT",
           severity: "WARNING",
           metadata: { endpoint: "/api/chat", ip: clientIp, resetMs: rateLimit.resetMs },
@@ -38,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const workspaceId =
       reqWorkspaceId ||
-      user?.activeWorkspaceId ||
+      user.activeWorkspaceId ||
       (await prisma.workspace.findFirst())?.id;
 
     // 1. Retrieve relevant chunks via pgvector
@@ -46,7 +53,18 @@ export async function POST(req: NextRequest) {
 
     // 2. Resolve or create chat conversation
     let chatId = existingChatId;
-    if (!chatId) {
+    if (chatId) {
+      const existing = await prisma.chat.findUnique({
+        where: { id: chatId },
+        select: { userId: true },
+      });
+      if (!existing || (existing.userId !== user.id && user.role !== "ADMIN")) {
+        return new Response(JSON.stringify({ error: "Forbidden: You do not have permission for this chat." }), {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    } else {
       // Auto-title from the first 6 words of message
       const title =
         message.trim().split(/\s+/).slice(0, 6).join(" ") || "New Conversation";
@@ -54,7 +72,7 @@ export async function POST(req: NextRequest) {
       const newChat = await prisma.chat.create({
         data: {
           title,
-          userId: user?.id || (await prisma.user.findFirst())?.id || "anonymous",
+          userId: user.id,
           workspaceId: workspaceId || null,
         },
       });

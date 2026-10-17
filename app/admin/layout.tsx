@@ -13,6 +13,9 @@ import {
   ChatBubbleLeftRightIcon,
   CircleStackIcon,
   CpuChipIcon,
+  LockClosedIcon,
+  ShieldExclamationIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
 const navLinks = [
@@ -25,13 +28,92 @@ const navLinks = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading, activeWorkspace } = useAuth();
+  const { user, loading, logout, activeWorkspace } = useAuth();
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "ADMIN")) {
-      // Non-admin fallback if needed
+    if (!loading) {
+      if (!user) {
+        router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
+      } else if (user.role !== "ADMIN") {
+        router.replace("/chat?error=admin_required");
+      }
     }
-  }, [user, loading, router]);
+  }, [user, loading, pathname, router]);
+
+  // 1. Loading State
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-md w-full p-8 border border-default-200/60 dark:border-white/10 bg-default-50/70 dark:bg-default-50/20 backdrop-blur-xl text-center flex flex-col items-center gap-4 rounded-3xl shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+            <ArrowPathIcon className="w-7 h-7 animate-spin" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-foreground">Verifying Administrator Clearance</h3>
+            <p className="text-xs text-default-400 mt-1">Validating cryptographic session and administrative RBAC permissions...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated State
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-md w-full p-8 border border-danger-500/20 bg-danger-500/5 backdrop-blur-xl text-center flex flex-col items-center gap-5 rounded-3xl shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-danger-500/10 border border-danger-500/20 flex items-center justify-center text-danger">
+            <LockClosedIcon className="w-7 h-7" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Authentication Required</h3>
+            <p className="text-xs text-default-400 mt-1.5 leading-relaxed">
+              You must sign in with an administrator account to access the control plane.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2.5 w-full mt-2">
+            <Link href={`/login?redirect=${encodeURIComponent(pathname)}`} className="w-full">
+              <Button variant="primary" className="w-full font-semibold">
+                Sign In as Administrator
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // 3. Unauthorized Role (Non-Admin) State
+  if (user.role !== "ADMIN") {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-md w-full p-8 border border-warning-500/20 bg-warning-500/5 backdrop-blur-xl text-center flex flex-col items-center gap-5 rounded-3xl shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-warning-500/10 border border-warning-500/20 flex items-center justify-center text-warning-500">
+            <ShieldExclamationIcon className="w-7 h-7" />
+          </div>
+          <div>
+            <Chip size="sm" variant="soft" className="font-bold text-[10px] mb-2 uppercase text-warning-500 border border-warning-500/20">
+              403 Forbidden
+            </Chip>
+            <h3 className="text-lg font-bold text-foreground">Admin Privilege Required</h3>
+            <p className="text-xs text-default-400 mt-1.5 leading-relaxed">
+              Your account (<span className="font-semibold text-foreground">{user.email}</span>) holds role <span className="font-mono text-warning-500">{user.role}</span>. Administrator clearance is required to manage knowledge docs and vector configurations.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2.5 w-full mt-2">
+            <Link href="/chat" className="w-full">
+              <Button variant="primary" className="w-full font-semibold">
+                Go to Chatbot
+              </Button>
+            </Link>
+            <Button variant="secondary" className="w-full font-semibold" onPress={() => logout()}>
+              Switch Account
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col md:flex-row gap-6 min-h-[calc(100vh-10rem)]">

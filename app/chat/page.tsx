@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import {
   Card,
   CardHeader,
@@ -24,6 +26,8 @@ import {
   ArrowPathIcon,
   CpuChipIcon,
   CheckBadgeIcon,
+  LockClosedIcon,
+  ShieldExclamationIcon,
 } from "@heroicons/react/24/outline";
 
 interface Source {
@@ -56,8 +60,13 @@ const STARTER_PROMPTS = [
   "How does this platform maintain $0 recurring monthly operating costs?",
 ];
 
-export default function ChatPage() {
-  const { user, activeWorkspace } = useAuth();
+function ChatContent() {
+  const { user, loading, activeWorkspace } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const adminRequiredError = searchParams.get("error") === "admin_required";
+  const [dismissAdminAlert, setDismissAdminAlert] = useState(false);
+
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -70,18 +79,38 @@ export default function ChatPage() {
   const [selectedSource, setSelectedSource] = useState<Source | null>(null);
   const [isCitationOpen, setIsCitationOpen] = useState(false);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Keep window pinned to top so header is never scrolled off-screen
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const scrollToBottom = (smooth = true) => {
+    if (!messagesContainerRef.current) return;
+    if (messages.length === 0) return; // Never auto-scroll empty hero state
+    messagesContainerRef.current.scrollTo({
+      top: messagesContainerRef.current.scrollHeight,
+      behavior: smooth ? "smooth" : "auto",
+    });
   };
 
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0) {
+      scrollToBottom(!isStreaming);
+    }
   }, [messages, isStreaming]);
 
-  // Load chat sessions
+  // Auth gate check
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login?redirect=/chat");
+    }
+  }, [user, loading, router]);
+
+  // Load chat sessions only when authenticated
   const loadChats = async () => {
+    if (!user) return;
     try {
       const res = await fetch("/api/chats");
       if (res.ok) {
@@ -94,8 +123,10 @@ export default function ChatPage() {
   };
 
   useEffect(() => {
-    loadChats();
-  }, [activeWorkspace]);
+    if (user) {
+      loadChats();
+    }
+  }, [activeWorkspace, user]);
 
   // Load messages when active chat changes
   const loadMessages = async (chatId: string) => {
@@ -280,12 +311,55 @@ export default function ChatPage() {
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // 1. Loading State
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-md w-full p-8 border border-default-200/60 dark:border-white/10 bg-default-50/70 dark:bg-default-50/20 backdrop-blur-xl text-center flex flex-col items-center gap-4 rounded-3xl shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+            <ArrowPathIcon className="w-7 h-7 animate-spin" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-foreground">Loading AI Assistant</h3>
+            <p className="text-xs text-default-400 mt-1">Authenticating session and establishing pgvector knowledge link...</p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated State
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-md w-full p-8 border border-danger-500/20 bg-danger-500/5 backdrop-blur-xl text-center flex flex-col items-center gap-5 rounded-3xl shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-danger-500/10 border border-danger-500/20 flex items-center justify-center text-danger">
+            <LockClosedIcon className="w-7 h-7" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Authentication Required</h3>
+            <p className="text-xs text-default-400 mt-1.5 leading-relaxed">
+              Please sign in to access your AI chat assistant, ask questions, and retrieve citations from indexed documents.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2.5 w-full mt-2">
+            <Link href="/login?redirect=/chat" className="w-full">
+              <Button variant="primary" className="w-full font-semibold">
+                Sign In to Continue
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-[calc(100vh-8.5rem)] gap-4 relative">
+    <div className="flex flex-1 h-full min-h-0 gap-3 sm:gap-4 relative overflow-hidden">
       {/* 1. Sidebar - Conversation History */}
-      <aside className="w-80 hidden md:flex flex-col rounded-2xl border border-default-200/60 dark:border-white/10 bg-default-50/70 dark:bg-default-50/20 backdrop-blur-xl shadow-xl overflow-hidden">
+      <aside className="w-72 lg:w-80 shrink-0 hidden md:flex flex-col rounded-2xl border border-default-200/60 dark:border-white/10 bg-default-50/70 dark:bg-default-50/20 backdrop-blur-xl shadow-xl overflow-hidden h-full min-h-0">
         {/* Sidebar Header */}
-        <div className="p-3.5 border-b border-default-200/60 dark:border-default-100/30 space-y-3">
+        <div className="p-3.5 border-b border-default-200/60 dark:border-default-100/30 space-y-3 shrink-0">
           <Button
             variant="primary"
             className="w-full font-bold h-10 shadow-md shadow-primary/20 flex items-center justify-center gap-2 rounded-xl text-xs"
@@ -350,7 +424,7 @@ export default function ChatPage() {
         </div>
 
         {/* Sidebar Footer Info */}
-        <div className="p-3 border-t border-default-200/50 dark:border-default-100/30 bg-default-100/30 flex items-center justify-between text-[11px] text-default-400">
+        <div className="p-3 border-t border-default-200/50 dark:border-default-100/30 bg-default-100/30 flex items-center justify-between text-[11px] text-default-400 shrink-0">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-success-500" />
             <span>pgvector Connected</span>
@@ -360,9 +434,9 @@ export default function ChatPage() {
       </aside>
 
       {/* 2. Main Chat Area */}
-      <main className="flex-1 flex flex-col rounded-2xl border border-default-200/60 dark:border-white/10 bg-default-50/70 dark:bg-default-50/20 backdrop-blur-xl shadow-2xl overflow-hidden relative">
+      <main className="flex-1 min-w-0 h-full min-h-0 flex flex-col rounded-2xl border border-default-200/60 dark:border-white/10 bg-default-50/70 dark:bg-default-50/20 backdrop-blur-xl shadow-2xl overflow-hidden relative">
         {/* Chat Window Top Bar */}
-        <header className="h-14 px-5 border-b border-default-200/60 dark:border-default-100/30 flex items-center justify-between bg-default-100/30">
+        <header className="h-14 px-4 sm:px-5 border-b border-default-200/60 dark:border-default-100/30 flex items-center justify-between bg-default-100/30 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
               <SparklesIcon className="w-4 h-4" />
@@ -395,13 +469,33 @@ export default function ChatPage() {
           </div>
         </header>
 
+        {/* Admin Access Redirect Banner */}
+        {adminRequiredError && !dismissAdminAlert && (
+          <div className="bg-warning-500/10 border-b border-warning-500/20 px-4 py-2.5 flex items-center justify-between text-xs text-warning-700 dark:text-warning-400 shrink-0">
+            <div className="flex items-center gap-2">
+              <ShieldExclamationIcon className="w-4 h-4 shrink-0 text-warning-500" />
+              <span>Administrative access restricted: Your account does not have administrator clearance for the Admin Portal. Redirected to Chatbot.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDismissAdminAlert(true)}
+              className="p-1 hover:bg-warning-500/20 rounded-md transition-colors"
+            >
+              <XMarkIcon className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Messages Stream Container */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5"
+        >
           {messages.length === 0 ? (
             /* Empty State Hero */
-            <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto space-y-6 py-8">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30">
-                <SparklesIcon className="w-8 h-8" />
+            <div className="flex flex-col items-center justify-center min-h-full my-auto text-center max-w-lg mx-auto space-y-5 py-4">
+              <div className="w-14 h-14 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30 shrink-0">
+                <SparklesIcon className="w-7 h-7" />
               </div>
 
               <div>
@@ -494,11 +588,10 @@ export default function ChatPage() {
               </div>
             ))
           )}
-          <div ref={messagesEndRef} />
         </div>
 
         {/* 3. Bottom Prompt Input Dock */}
-        <div className="p-4 border-t border-default-200/60 dark:border-default-100/30 bg-default-100/30">
+        <div className="p-3 sm:p-4 border-t border-default-200/60 dark:border-default-100/30 bg-default-100/30 shrink-0">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -615,5 +708,21 @@ export default function ChatPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+            <ArrowPathIcon className="w-6 h-6 animate-spin" />
+          </div>
+        </div>
+      }
+    >
+      <ChatContent />
+    </Suspense>
   );
 }

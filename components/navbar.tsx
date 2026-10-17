@@ -52,19 +52,21 @@ export const Navbar = () => {
                 <span>Chatbot</span>
               </NextLink>
             </li>
-            <li>
-              <NextLink
-                href="/admin"
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
-                  pathname.startsWith("/admin")
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                    : "text-default-600 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-50/50"
-                }`}
-              >
-                <WrenchScrewdriverIcon className="w-4 h-4" />
-                <span>Admin Portal</span>
-              </NextLink>
-            </li>
+            {user?.role === "ADMIN" && (
+              <li>
+                <NextLink
+                  href="/admin"
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+                    pathname.startsWith("/admin")
+                      ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                      : "text-default-600 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-50/50"
+                  }`}
+                >
+                  <WrenchScrewdriverIcon className="w-4 h-4" />
+                  <span>Admin Portal</span>
+                </NextLink>
+              </li>
+            )}
             <li>
               <NextLink
                 href="/docs"

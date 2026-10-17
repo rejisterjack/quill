@@ -11,6 +11,12 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (user.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Forbidden: Administrator privileges required to index knowledge documents." },
+      { status: 403 }
+    );
+  }
 
   // Get workspace ID
   const workspaceId =

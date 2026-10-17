@@ -4,8 +4,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") {
-    // If not admin, still return safe system activity for inspection
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (user.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Forbidden: Administrator privileges required." },
+      { status: 403 }
+    );
   }
 
   const logs = await prisma.auditLog.findMany({

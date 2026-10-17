@@ -36,6 +36,12 @@ export async function DELETE(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (user.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Forbidden: Administrator privileges required to delete documents." },
+      { status: 403 }
+    );
+  }
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");

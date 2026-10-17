@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardHeader, CardContent, CardFooter, Button } from "@heroui/react";
 import {
   BoltIcon,
@@ -14,12 +14,16 @@ import {
   ExclamationCircleIcon,
   SparklesIcon,
   KeyIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/lib/auth-context";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
-  const { refresh } = useAuth();
+  const searchParams = useSearchParams();
+  const { user, loading: authLoading, refresh } = useAuth();
+  const redirectParam = searchParams.get("redirect");
+
   const [selectedTab, setSelectedTab] = useState<"login" | "register">("login");
 
   // Login form state
@@ -32,6 +36,21 @@ export default function LoginPage() {
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
+
+  // If already authenticated, redirect immediately
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (redirectParam && redirectParam.startsWith("/")) {
+        if (redirectParam.startsWith("/admin") && user.role !== "ADMIN") {
+          router.replace("/chat");
+        } else {
+          router.replace(redirectParam);
+        }
+      } else {
+        router.replace(user.role === "ADMIN" ? "/admin" : "/chat");
+      }
+    }
+  }, [user, authLoading, redirectParam, router]);
 
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -51,10 +70,14 @@ export default function LoginPage() {
       }
 
       await refresh();
-      if (data.user.role === "ADMIN") {
-        router.push("/admin");
+      if (redirectParam && redirectParam.startsWith("/")) {
+        if (redirectParam.startsWith("/admin") && data.user.role !== "ADMIN") {
+          router.replace("/chat");
+        } else {
+          router.replace(redirectParam);
+        }
       } else {
-        router.push("/chat");
+        router.replace(data.user.role === "ADMIN" ? "/admin" : "/chat");
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Invalid credentials");
@@ -85,7 +108,11 @@ export default function LoginPage() {
       }
 
       await refresh();
-      router.push("/chat");
+      if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("/admin")) {
+        router.replace(redirectParam);
+      } else {
+        router.replace("/chat");
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
@@ -316,5 +343,21 @@ export default function LoginPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+            <ArrowPathIcon className="w-6 h-6 animate-spin" />
+          </div>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

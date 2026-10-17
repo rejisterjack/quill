@@ -4,13 +4,17 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
-  const workspaceId = searchParams.get("workspaceId") || user?.activeWorkspaceId;
+  const workspaceId = searchParams.get("workspaceId") || user.activeWorkspaceId;
 
   const chats = await prisma.chat.findMany({
     where: {
+      userId: user.id,
       ...(workspaceId ? { workspaceId } : {}),
-      ...(user ? { userId: user.id } : {}),
     },
     orderBy: { updatedAt: "desc" },
     include: {

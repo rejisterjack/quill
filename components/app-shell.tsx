@@ -8,12 +8,24 @@ import { Navbar } from "@/components/navbar";
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isEmbed = pathname?.startsWith("/embed");
+  const isChat = pathname?.startsWith("/chat");
 
   if (isEmbed) {
     return (
       <main className="min-h-screen w-full flex flex-col p-2 sm:p-4">
         {children}
       </main>
+    );
+  }
+
+  if (isChat) {
+    return (
+      <div className="relative z-10 flex flex-col h-dvh max-h-dvh overflow-hidden bg-background">
+        <Navbar />
+        <main className="flex-1 min-h-0 w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 py-2 sm:py-3 overflow-hidden flex flex-col">
+          {children}
+        </main>
+      </div>
     );
   }
 

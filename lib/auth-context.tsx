@@ -68,11 +68,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   const logout = useCallback(async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
-    setWorkspaces([]);
-    router.push("/login");
-  }, [router]);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    } finally {
+      setUser(null);
+      setWorkspaces([]);
+      window.location.href = "/login";
+    }
+  }, []);
 
   const activeWorkspace =
     workspaces.find((w) => w.id === user?.activeWorkspaceId) || workspaces[0] || null;
