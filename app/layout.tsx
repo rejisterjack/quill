@@ -3,17 +3,16 @@ import { Metadata, Viewport } from "next";
 import clsx from "clsx";
 
 import { Providers } from "./providers";
-
 import { siteConfig } from "@/config/site";
-import { fontSans } from "@/config/fonts";
-import { Navbar } from "@/components/navbar";
+import { fontSans, fontMono } from "@/config/fonts";
+import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
   title: {
-    default: siteConfig.name,
-    template: `%s - ${siteConfig.name}`,
+    default: "RAG Starter Kit — Own Your AI Knowledge Base",
+    template: `%s - RAG Starter Kit`,
   },
-  description: siteConfig.description,
+  description: "Self-hosted, production-grade Next.js 16 RAG starter kit with PostgreSQL, Prisma 7, pgvector, and HeroUI at $0 recurring cost.",
   icons: {
     icon: "/favicon.ico",
   },
@@ -22,7 +21,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
+    { media: "(prefers-color-scheme: dark)", color: "#090d16" },
   ],
 };
 
@@ -36,28 +35,17 @@ export default function RootLayout({
       <head />
       <body
         className={clsx(
-          "min-h-screen text-foreground bg-background font-sans antialiased",
+          "min-h-screen text-foreground bg-background font-sans antialiased selection:bg-primary/20 selection:text-primary",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <div className="relative flex flex-col h-screen">
-            <Navbar />
-            <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
-              {children}
-            </main>
-            <footer className="w-full flex items-center justify-center py-3">
-              <a
-                className="flex items-center gap-1 text-current no-underline"
-                href="https://heroui.com?utm_source=next-app-template"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <span className="text-muted">Powered by</span>
-                <p className="text-accent">HeroUI</p>
-              </a>
-            </footer>
-          </div>
+          {/* Atmospheric ambient lighting & grid backdrop */}
+          <div className="fixed inset-0 pointer-events-none bg-ambient-mesh opacity-70 z-0" />
+          <div className="fixed inset-0 pointer-events-none bg-grid-pattern opacity-30 z-0" />
+
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

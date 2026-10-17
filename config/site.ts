@@ -1,8 +1,8 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Next.js + HeroUI",
-  description: "Make beautiful websites regardless of your design experience.",
+  name: "RAG Starter Kit",
+  description: "Production-ready, self-hosted AI knowledge base chatbot in 100% TypeScript.",
   navItems: [
     {
       label: "Home",
