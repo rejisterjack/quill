@@ -216,9 +216,9 @@ This project includes everything a production system needs — already wired in,
 
 The work that would take three weeks to build from scratch is already done.
 
-### 4. Real-time and Collaborative from Day One
+### 4. Real-time Streaming via Server-Sent Events (SSE)
 
-Multi-user workspaces, typing indicators, presence tracking, and Ably WebSocket connections are not bolt-ons. They're built in from the start. A team can share a knowledge base and see each other working in it.
+Real-time response streaming, token generation, and grounded source citations are powered natively via HTTP Server-Sent Events (SSE) and `ReadableStream`. Because this is a Next.js App Router application built for serverless and edge environments, there is zero need for external WebSocket brokers (like Ably or Pusher) or persistent socket daemons. All updates stream directly over standard HTTP with zero third-party socket dependencies.
 
 ---
 
