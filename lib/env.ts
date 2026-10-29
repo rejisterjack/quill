@@ -4,7 +4,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   DATABASE_URL: z.string().min(1),
   OPENROUTER_API_KEY: z.string().optional().default(""),
-  AUTH_SECRET: z.string().default(process.env.NEXTAUTH_SECRET || "super-secret-rag-starter-kit-key-1234"),
+  AUTH_SECRET: z.string().default(process.env.NEXTAUTH_SECRET || "super-secret-quill-key-1234"),
   NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:7392"),
   EMBEDDING_PROVIDER: z.string().default("openai"),
   EMBEDDING_MODEL: z.string().default("liquid/lfm-2.5-embedding-350m:free"),

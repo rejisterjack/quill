@@ -1,7 +1,7 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "RAG Starter Kit",
+  name: "Quill",
   description: "Production-ready, self-hosted AI knowledge base chatbot in 100% TypeScript.",
   navItems: [
     {

@@ -360,7 +360,7 @@ export default function EmbedChatPage() {
           </Button>
         </form>
         <div className="flex items-center justify-between text-[10px] text-default-400 mt-1.5 px-1">
-          <span>Powered by RAG Starter Kit</span>
+          <span>Powered by Quill</span>
           <span>Zero recurring cost</span>
         </div>
       </div>

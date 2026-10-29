@@ -5,7 +5,7 @@ const SESSION_COOKIE_NAME = "rag_session";
 const secretKey =
   process.env.AUTH_SECRET ||
   process.env.NEXTAUTH_SECRET ||
-  "super-secret-rag-starter-kit-key-1234";
+  "super-secret-quill-key-1234";
 const JWT_SECRET = new TextEncoder().encode(secretKey);
 
 interface UserSessionPayload {

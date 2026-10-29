@@ -121,13 +121,13 @@ function LoginContent() {
   };
 
   const quickFillAdmin = () => {
-    setEmail("admin@rag-starter.dev");
+    setEmail("admin@quill.dev");
     setPassword("Admin1234!");
     setError(null);
   };
 
   const quickFillDemo = () => {
-    setEmail("demo@rag-starter.dev");
+    setEmail("demo@quill.dev");
     setPassword("Demo1234!");
     setError(null);
   };
@@ -144,7 +144,7 @@ function LoginContent() {
               <BoltIcon className="w-6 h-6" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent">
-              RAG Starter Kit
+              Quill
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-default-500">
@@ -209,7 +209,7 @@ function LoginContent() {
                   <input
                     type="email"
                     required
-                    placeholder="admin@rag-starter.dev"
+                    placeholder="admin@quill.dev"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-default-300/70 dark:border-default-100/40 bg-background/80 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
@@ -257,7 +257,7 @@ function LoginContent() {
                         Admin
                       </div>
                       <div className="text-[10px] text-default-400 mt-0.5 truncate">
-                        admin@rag-starter.dev
+                        admin@quill.dev
                       </div>
                     </button>
 
@@ -271,7 +271,7 @@ function LoginContent() {
                         Demo User
                       </div>
                       <div className="text-[10px] text-default-400 mt-0.5 truncate">
-                        demo@rag-starter.dev
+                        demo@quill.dev
                       </div>
                     </button>
                   </div>

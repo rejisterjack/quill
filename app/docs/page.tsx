@@ -188,7 +188,7 @@ export default function DocsPage() {
                   id="qs-clone"
                   filename="terminal"
                   language="bash"
-                  code={`# Clone the official starter repository\ngit clone https://github.com/rejisterjack/rag-starter-kit.git\ncd rag-starter-kit\n\n# Install dependencies with Bun (recommended) or npm\nbun install`}
+                  code={`# Clone the official starter repository\ngit clone https://github.com/rejisterjack/quill.git\ncd quill\n\n# Install dependencies with Bun (recommended) or npm\nbun install`}
                 />
               </div>
             </div>
@@ -449,7 +449,7 @@ export default function DocsPage() {
           <div className="space-y-2">
             <h2 className="text-2xl font-black text-foreground">REST API Endpoints</h2>
             <p className="text-xs sm:text-sm text-default-500">
-              Integrate RAG Starter Kit into your mobile apps, internal tools, and client platforms.
+              Integrate Quill into your mobile apps, internal tools, and client platforms.
             </p>
           </div>
 
@@ -664,7 +664,7 @@ export default function DocsPage() {
             </Button>
           </Link>
           <a
-            href="https://github.com/rejisterjack/rag-starter-kit"
+            href="https://github.com/rejisterjack/quill"
             target="_blank"
             rel="noreferrer"
           >

@@ -1,4 +1,4 @@
-# RAG Starter Kit — Own Your AI Knowledge Base
+# Quill — Own Your AI Knowledge Base
 
 > **The fastest way for a TypeScript developer to go from "I have documents" to "I have a production chatbot" — in one weekend, at zero cost.**
 
@@ -72,8 +72,8 @@ graph TD
 
 ### 2. Clone and Install
 ```bash
-git clone https://github.com/rejisterjack/rag-starter-kit.git
-cd rag-starter-kit
+git clone https://github.com/rejisterjack/quill.git
+cd quill
 bun install
 ```
 
@@ -103,8 +103,8 @@ bun prisma db seed
 ```
 
 Default credentials:
-- **Admin**: `admin@rag-starter.dev` / `Admin1234!`
-- **Demo User**: `user@rag-starter.dev` / `User1234!`
+- **Admin**: `admin@quill.dev` / `Admin1234!`
+- **Demo User**: `user@quill.dev` / `User1234!`
 
 ### 5. Launch the Server
 ```bash

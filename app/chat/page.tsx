@@ -54,7 +54,7 @@ interface ChatSession {
 }
 
 const STARTER_PROMPTS = [
-  "How does the pgvector cosine distance search work in this starter kit?",
+  "How does the pgvector cosine distance search work in Quill?",
   "What document formats can I upload and index into the knowledge base?",
   "Explain the difference between Mode 1 (Turnkey) and Mode 2 (Starter Kit).",
   "How does this platform maintain $0 recurring monthly operating costs?",

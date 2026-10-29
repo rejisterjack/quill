@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "next-app-template",
+      "name": "quill",
       "dependencies": {
         "@heroicons/react": "^2.2.0",
         "@heroui/react": "3.2.6",

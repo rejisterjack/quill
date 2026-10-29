@@ -74,7 +74,7 @@ export default function BlogPage() {
           Technical Deep Dives & Guides
         </h1>
         <p className="text-sm sm:text-base text-default-500 max-w-2xl leading-relaxed">
-          Architectural breakdowns, benchmarking studies, and production guides from the RAG Starter Kit team.
+          Architectural breakdowns, benchmarking studies, and production guides from the Quill team.
         </p>
       </div>
 
