@@ -33,7 +33,8 @@ import {
 interface Source {
   chunkId: string;
   documentTitle: string;
-  similarity: number;
+  similarity: number | null;
+  match?: "vector" | "keyword";
   snippet: string;
   pageNumber?: number;
   section?: string;
@@ -273,6 +274,16 @@ function ChatContent() {
               console.error("Failed to parse token event:", parseErr);
             }
           } else if (eventType === "done" || eventType === "end") {
+            try {
+              const parsed = dataStr ? JSON.parse(dataStr) : {};
+              if (parsed.messageId) {
+                setMessages((prev) =>
+                  prev.map((msg) => (msg.id === tempAssistantId ? { ...msg, id: parsed.messageId } : msg)),
+                );
+              }
+            } catch {
+              /* keep the temporary id */
+            }
             loadChats();
           }
         }
@@ -565,7 +576,7 @@ function ChatContent() {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {msg.sources.map((src, sIdx) => {
-                          const percentMatch = Math.round((1 - src.similarity) * 100);
+                          const percentMatch = src.similarity == null ? null : Math.round(src.similarity * 100);
                           return (
                             <button
                               key={sIdx}
@@ -576,7 +587,7 @@ function ChatContent() {
                               <DocumentTextIcon className="w-3.5 h-3.5" />
                               <span className="truncate max-w-[140px]">{src.documentTitle}</span>
                               <span className="bg-primary/20 px-1 rounded text-[10px] font-mono">
-                                {percentMatch > 0 ? `${percentMatch}%` : "Match"}
+                                {percentMatch != null && percentMatch > 0 ? `${percentMatch}%` : "Match"}
                               </span>
                             </button>
                           );
@@ -585,6 +596,21 @@ function ChatContent() {
                     </div>
                   )}
                 </div>
+                {msg.role === "ASSISTANT" && msg.content && (
+                  <div className="flex gap-2 text-[11px] text-default-400">
+                    <button type="button" onClick={() => fetch(`/api/messages/${msg.id}/feedback`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating: "UP" }) })}>Up</button>
+                    <button type="button" onClick={() => fetch(`/api/messages/${msg.id}/feedback`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rating: "DOWN" }) })}>Down</button>
+                    <button type="button" onClick={async () => {
+                      if (!activeChatId) return;
+                      const res = await fetch(`/api/chats/${activeChatId}/branch`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageId: msg.id }) });
+                      const data = await res.json();
+                      if (data.chat?.id) {
+                        setActiveChatId(data.chat.id);
+                        loadChats();
+                      }
+                    }}>Branch</button>
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -599,6 +625,30 @@ function ChatContent() {
             }}
             className="flex items-center gap-2"
           >
+            <button
+              type="button"
+              className="text-[11px] px-2"
+              onClick={async () => {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const recorder = new MediaRecorder(stream);
+                const chunks: Blob[] = [];
+                recorder.ondataavailable = (event) => chunks.push(event.data);
+                const stopped = new Promise<Blob>((resolve) => {
+                  recorder.onstop = () => resolve(new Blob(chunks, { type: recorder.mimeType || "audio/webm" }));
+                });
+                recorder.start();
+                window.setTimeout(() => recorder.stop(), 4000);
+                const blob = await stopped;
+                stream.getTracks().forEach((track) => track.stop());
+                const body = new FormData();
+                body.append("audio", blob, "speech.webm");
+                const res = await fetch("/api/chat/transcribe", { method: "POST", body });
+                const data = await res.json();
+                if (data.text) setInputMessage(data.text);
+              }}
+            >
+              Record
+            </button>
             <input
               type="text"
               placeholder="Ask anything about your knowledge base..."
@@ -657,11 +707,11 @@ function ChatContent() {
                 <div className="space-y-0.5">
                   <span className="text-default-400">Similarity Metric:</span>
                   <div className="font-mono font-bold text-foreground">
-                    Cosine Distance ({selectedSource.similarity.toFixed(4)})
+                    {selectedSource.similarity == null ? "Keyword match" : `Cosine similarity (${selectedSource.similarity.toFixed(4)})`}
                   </div>
                 </div>
                 <Chip size="sm" color="success" variant="soft" className="font-semibold">
-                  Match Confidence: {Math.round((1 - selectedSource.similarity) * 100)}%
+                  {selectedSource.similarity == null ? "No similarity score" : `Match confidence: ${Math.round(selectedSource.similarity * 100)}%`}
                 </Chip>
               </div>
 

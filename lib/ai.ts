@@ -1,8 +1,8 @@
 import OpenAI from "openai";
-import { env } from "@/lib/env";
+import { env, EmbeddingError } from "@/lib/env";
 
 export const openai = new OpenAI({
-  apiKey: env.OPENROUTER_API_KEY || "dummy",
+  apiKey: env.OPENROUTER_API_KEY || "missing",
   baseURL: env.EMBEDDING_BASE_URL || "https://openrouter.ai/api/v1",
 });
 
@@ -13,44 +13,32 @@ export const DEFAULT_CHAT_MODELS = [
   "meta-llama/llama-3.3-70b-instruct:free",
 ];
 
-// Fallback deterministic embedding generator
-function generateFallbackEmbedding(text: string, dimensions = 1024): number[] {
-  const vector = new Array(dimensions).fill(0);
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = (hash << 5) - hash + text.charCodeAt(i);
-    hash |= 0;
-  }
-  for (let i = 0; i < dimensions; i++) {
-    const val = Math.sin(hash + i) * 10000;
-    vector[i] = Number((val - Math.floor(val)).toFixed(4));
-  }
-  return vector;
-}
-
-export async function createEmbedding(text: string): Promise<number[]> {
+export async function createEmbedding(
+  text: string,
+  options?: { model?: string; dimensions?: number },
+): Promise<number[]> {
   const cleanInput = text.trim().slice(0, 8000);
+  const dimensions = options?.dimensions ?? env.EMBEDDING_DIMENSIONS;
+  const model = options?.model ?? env.EMBEDDING_MODEL;
+
   if (!cleanInput) {
-    return generateFallbackEmbedding("empty", env.EMBEDDING_DIMENSIONS);
+    throw new EmbeddingError("Cannot embed empty text");
+  }
+  if (!env.OPENROUTER_API_KEY) {
+    throw new EmbeddingError("OPENROUTER_API_KEY is required to create embeddings");
   }
 
-  if (env.OPENROUTER_API_KEY) {
-    try {
-      const resp = await openai.embeddings.create({
-        model: env.EMBEDDING_MODEL,
-        input: cleanInput,
-      });
-
-      const embedding = resp.data[0]?.embedding;
-      if (Array.isArray(embedding) && embedding.length > 0) {
-        return embedding;
-      }
-    } catch (err) {
-      console.warn("OpenRouter embedding request failed, using fallback vector:", err instanceof Error ? err.message : err);
-    }
+  const resp = await openai.embeddings.create({
+    model,
+    input: cleanInput,
+  });
+  const embedding = resp.data[0]?.embedding;
+  if (!Array.isArray(embedding) || embedding.length !== dimensions) {
+    throw new EmbeddingError(
+      `Embedding length ${embedding?.length ?? 0} does not match expected ${dimensions}`,
+    );
   }
-
-  return generateFallbackEmbedding(cleanInput, env.EMBEDDING_DIMENSIONS);
+  return embedding;
 }
 
 export interface StreamingChatOptions {
@@ -58,23 +46,24 @@ export interface StreamingChatOptions {
   contextChunks?: Array<{
     documentTitle: string;
     content: string;
-    similarity: number;
+    similarity: number | null;
     pageNumber?: number;
     section?: string;
   }>;
+  model?: string;
 }
 
 export async function streamChatCompletion({
   messages,
   contextChunks = [],
+  model,
 }: StreamingChatOptions) {
-  // Build system prompt strictly enforcing grounding on uploaded knowledge base
   const contextText =
     contextChunks.length > 0
       ? contextChunks
           .map(
             (c, i) =>
-              `[Source ${i + 1}: ${c.documentTitle}${c.pageNumber ? `, p.${c.pageNumber}` : ""}]\n${c.content}`
+              `[Source ${i + 1}: ${c.documentTitle}${c.pageNumber ? `, p.${c.pageNumber}` : ""}]\n${c.content}`,
           )
           .join("\n\n---\n\n")
       : "No relevant documents found in knowledge base.";
@@ -95,21 +84,40 @@ ${contextText}`;
     ...messages,
   ];
 
-  // Try available models
-  for (const model of DEFAULT_CHAT_MODELS) {
+  const models = model ? [model, ...DEFAULT_CHAT_MODELS.filter((item) => item !== model)] : DEFAULT_CHAT_MODELS;
+
+  for (const candidate of models) {
     try {
-      const stream = await openai.chat.completions.create({
-        model,
+      return await openai.chat.completions.create({
+        model: candidate,
         messages: promptMessages,
         stream: true,
         temperature: 0.2,
       });
-
-      return stream;
     } catch (err) {
-      console.warn(`Model ${model} unavailable, trying next...`, err instanceof Error ? err.message : err);
+      console.warn(`Model ${candidate} unavailable, trying next...`, err instanceof Error ? err.message : err);
     }
   }
 
   return null;
+}
+
+export async function describeImage(buffer: Buffer, mime: string): Promise<string> {
+  if (!env.OPENROUTER_API_KEY) {
+    throw new EmbeddingError("OPENROUTER_API_KEY is required for OCR");
+  }
+  const dataUrl = `data:${mime};base64,${buffer.toString("base64")}`;
+  const response = await openai.chat.completions.create({
+    model: DEFAULT_CHAT_MODELS[0],
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Transcribe all visible text in this document image. Return only the text." },
+          { type: "image_url", image_url: { url: dataUrl } },
+        ],
+      },
+    ],
+  });
+  return response.choices[0]?.message?.content || "";
 }

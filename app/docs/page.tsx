@@ -251,7 +251,8 @@ export default function DocsPage() {
                   id="qs-run"
                   filename="terminal"
                   language="bash"
-                  code={`# Run with Next.js Turbopack\nbun dev\n\n# Visit http://localhost:7392 in your browser\n# Default Demo Admin Login: admin / admin123 (or demo / demo123)`}
+                  code={`# Run with Next.js Turbopack\nbun dev\n\n# Visit http://localhost:7392 in your browser\n# Admin: admin@quill.dev / Admin1234!
+# Demo: demo@quill.dev / Demo1234!`}
                 />
               </div>
             </div>
@@ -338,7 +339,7 @@ export default function DocsPage() {
               id="arch-sql"
               language="sql"
               filename="retrieval.sql"
-              code={`-- pgvector native cosine distance retrieval\nSELECT \n  c.id, \n  c.content, \n  c."documentId",\n  d.name AS "documentName",\n  1 - (c.embedding <=> $1::vector) AS similarity\nFROM "DocumentChunk" c\nJOIN "Document" d ON c."documentId" = d.id\nWHERE 1 - (c.embedding <=> $1::vector) > 0.45\nORDER BY c.embedding <=> $1::vector ASC\nLIMIT 5;`}
+              code={`-- pgvector native cosine distance retrieval\nSELECT \n  c.id, \n  c.content, \n  c."documentId",\n  d.name AS "documentName",\n  1 - (c.embedding <=> $1::vector) AS similarity\nFROM document_chunks c\nJOIN documents d ON c."documentId" = d.id\nWHERE 1 - (c.embedding <=> $1::vector) > 0.45\nORDER BY c.embedding <=> $1::vector ASC\nLIMIT 5;`}
             />
           </div>
         </div>
@@ -402,7 +403,7 @@ export default function DocsPage() {
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-4 font-mono font-bold text-primary">JWT_SECRET</td>
+                  <td className="p-4 font-mono font-bold text-primary">AUTH_SECRET</td>
                   <td className="p-4">
                     <Chip size="sm" color="default" variant="soft" className="font-bold text-[10px]">
                       Optional
@@ -600,7 +601,7 @@ export default function DocsPage() {
               id="pg-hnsw"
               language="sql"
               filename="create_hnsw_index.sql"
-              code={`-- Enable pgvector extension\nCREATE EXTENSION IF NOT EXISTS vector;\n\n-- Create HNSW index for high-speed cosine similarity (<=>)\nCREATE INDEX ON "DocumentChunk" \nUSING hnsw (embedding vector_cosine_ops)\nWITH (m = 16, ef_construction = 64);`}
+              code={`-- Enable pgvector extension\nCREATE EXTENSION IF NOT EXISTS vector;\n\n-- Create HNSW index for high-speed cosine similarity (<=>)\nCREATE INDEX ON document_chunks\nUSING hnsw (embedding vector_cosine_ops)\nWITH (m = 16, ef_construction = 64);`}
             />
           </Card>
         </div>

@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: rag_user
+      POSTGRES_PASSWORD: rag_secret_password
+      POSTGRES_DB: rag_db
+    networks:
+      - private
+    ports: []
+
+  redis:
+    image: redis:7
+    networks:
+      - private
+
+  app:
+    build: ../..
+    environment:
+      DATABASE_URL: "postgresql://rag_user:rag_secret_password@postgres:5432/rag_db"
+      AUTH_SECRET: "${AUTH_SECRET}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY}"
+      UPSTASH_REDIS_REST_URL: "${UPSTASH_REDIS_REST_URL}"
+      UPSTASH_REDIS_REST_TOKEN: "${UPSTASH_REDIS_REST_TOKEN}"
+    ports:
+      - "7392:7392"
+    networks:
+      - private
+    depends_on:
+      - postgres
+      - redis
+
+networks:
+  private:
+    internal: false

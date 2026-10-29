@@ -109,7 +109,7 @@ export default function BlogPage() {
 
             <div className="pt-2 flex items-center justify-between border-t border-default-200/40 dark:border-default-100/20">
               <span className="text-xs text-default-400 font-mono">100% TypeScript • Open Source</span>
-              <Link href="/docs">
+              <Link href={`/blog/${article.slug}`}>
                 <Button size="sm" variant="secondary" className="text-xs font-semibold flex items-center gap-1">
                   <span>Read Guide</span>
                   <ArrowRightIcon className="w-3.5 h-3.5" />

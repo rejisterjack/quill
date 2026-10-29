@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { writeAudit } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
@@ -47,12 +48,21 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Chat ID required" }, { status: 400 });
   }
 
+  const existing = await prisma.chat.findFirst({ where: { id, userId: user.id } });
   await prisma.chat.deleteMany({
     where: {
       id,
       userId: user.id,
     },
   });
+  if (existing) {
+    await writeAudit({
+      event: "CHAT_DELETED",
+      userId: user.id,
+      workspaceId: existing.workspaceId,
+      metadata: { chatId: id },
+    }).catch(() => {});
+  }
 
   return NextResponse.json({ success: true });
 }

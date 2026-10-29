@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { LivePlayground } from "@/components/live-playground";
 import Link from "next/link";
 import { Button, Card, CardHeader, CardContent, CardFooter, Chip } from "@heroui/react";
 import {
@@ -392,6 +393,7 @@ export default function Home() {
           <p className="text-xs sm:text-sm text-default-500 mt-1 max-w-lg mx-auto">
             Click any prompt below to trace how OpenRouter embeddings, PostgreSQL vector cosine indexing, and SSE generation combine.
           </p>
+          <LivePlayground />
 
           {/* Prompt Selector Pills */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-4">

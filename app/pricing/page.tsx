@@ -27,15 +27,21 @@ export default function PricingPage() {
   const [waitlistSuccess, setWaitlistSuccess] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  const handleWaitlistSubmit = (e: React.FormEvent) => {
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!waitlistEmail || !waitlistEmail.includes("@")) return;
-
     setWaitlistSubmitting(true);
-    setTimeout(() => {
-      setWaitlistSubmitting(false);
-      setWaitlistSuccess(true);
-    }, 600);
+    const res = await fetch("/api/waitlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: waitlistEmail, tier: waitlistTier }),
+    });
+    setWaitlistSubmitting(false);
+    if (res.status === 409) {
+      setWaitlistSuccess(false);
+      return;
+    }
+    if (res.ok) setWaitlistSuccess(true);
   };
 
   const faqs = [

@@ -32,6 +32,7 @@ export default function AdminAuditPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState<string>("ALL");
+  const [verifyMessage, setVerifyMessage] = useState("");
 
   useEffect(() => {
     async function loadLogs() {
@@ -76,9 +77,17 @@ export default function AdminAuditPage() {
           </p>
         </div>
 
-        <Chip size="sm" variant="soft" color="accent" className="font-mono text-xs">
-          {filteredLogs.length} Events Logged
-        </Chip>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="secondary" onPress={async () => {
+            const res = await fetch("/api/admin/audit?verify=1");
+            const data = await res.json();
+            setVerifyMessage(data.ok ? "Chain verified" : `Broken at ${data.badId}`);
+          }}>Verify chain</Button>
+          {verifyMessage && <span className="text-xs">{verifyMessage}</span>}
+          <Chip size="sm" variant="soft" color="accent" className="font-mono text-xs">
+            {filteredLogs.length} Events Logged
+          </Chip>
+        </div>
       </div>
 
       <Card className="border border-default-200/60 dark:border-white/10 bg-default-50/70 dark:bg-default-50/20 backdrop-blur-xl rounded-2xl shadow-xl p-4 sm:p-5 space-y-4">
@@ -96,7 +105,7 @@ export default function AdminAuditPage() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            {["ALL", "INFO", "WARNING", "ERROR"].map((sev) => (
+            {["ALL", "INFO", "WARNING", "ERROR", "CRITICAL"].map((sev) => (
               <button
                 key={sev}
                 type="button"

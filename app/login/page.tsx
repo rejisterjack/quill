@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardHeader, CardContent, CardFooter, Button } from "@heroui/react";
+import { signIn } from "next-auth/react";
 import {
   BoltIcon,
   UserIcon,
@@ -28,6 +29,7 @@ function LoginContent() {
 
   // Login form state
   const [email, setEmail] = useState("");
+  const [ssoSlug, setSsoSlug] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -240,6 +242,33 @@ function LoginContent() {
                   <ArrowRightEndOnRectangleIcon className="w-4 h-4" />
                   {loading ? "Signing in..." : "Sign In"}
                 </Button>
+
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <Button type="button" variant="secondary" onPress={() => signIn("github")}>GitHub</Button>
+                  <Button type="button" variant="secondary" onPress={() => signIn("google")}>Google</Button>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    value={ssoSlug}
+                    onChange={(event) => setSsoSlug(event.target.value)}
+                    placeholder="Workspace slug"
+                    className="flex-1 border rounded-xl px-3 py-2 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onPress={() => {
+                      const slug = ssoSlug.trim();
+                      if (!slug) return;
+                      window.location.href = `/api/auth/saml/${encodeURIComponent(slug)}`;
+                    }}
+                  >
+                    SAML
+                  </Button>
+                  <Button type="button" variant="secondary" onPress={() => signIn(ssoSlug.trim() ? `oidc-${ssoSlug.trim()}` : "oidc")}>
+                    OIDC
+                  </Button>
+                </div>
 
                 <div className="mt-4 pt-4 border-t border-default-200/50 dark:border-default-100/30">
                   <p className="text-[11px] text-default-400 font-medium mb-2.5 text-center flex items-center justify-center gap-1">

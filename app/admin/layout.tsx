@@ -23,12 +23,15 @@ const navLinks = [
   { href: "/admin/documents", label: "Knowledge Docs", icon: DocumentTextIcon, description: "Files, URLs & chunks" },
   { href: "/admin/analytics", label: "Analytics", icon: ArrowTrendingUpIcon, description: "Latency & cost savings" },
   { href: "/admin/audit", label: "Audit Logs", icon: ShieldCheckIcon, description: "Tamper-evident logs" },
+  { href: "/admin/connectors", label: "Connectors", icon: CircleStackIcon, description: "Notion, GitHub, and more" },
+  { href: "/admin/billing", label: "Plan", icon: CpuChipIcon, description: "Seats, Pro, and Neon" },
+  { href: "/admin/compliance", label: "Compliance", icon: LockClosedIcon, description: "Control evidence" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading, logout, activeWorkspace } = useAuth();
+  const { user, loading, logout, activeWorkspace, workspaces, switchWorkspace } = useAuth();
 
   useEffect(() => {
     if (!loading) {
@@ -137,9 +140,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="font-bold text-xs text-foreground truncate">
                 {activeWorkspace?.name || "Default Workspace"}
               </div>
-              <div className="text-[10px] text-default-400 font-mono truncate">
-                workspace_main
-              </div>
+              <select
+                className="text-[10px] text-default-400 font-mono bg-transparent max-w-[140px]"
+                value={activeWorkspace?.id || ""}
+                onChange={(event) => switchWorkspace(event.target.value)}
+              >
+                {workspaces.map((workspace) => (
+                  <option key={workspace.id} value={workspace.id}>{workspace.slug}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
