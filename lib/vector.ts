@@ -6,7 +6,8 @@ export interface RetrievedChunk {
   documentId: string;
   documentTitle: string;
   content: string;
-  similarity: number;
+  similarity: number | null;
+  match: "vector" | "keyword";
   pageNumber?: number;
   section?: string;
 }
@@ -53,7 +54,7 @@ export async function insertDocumentChunks(chunks: ChunkToInsert[]): Promise<voi
       chunk.section || null,
       chunk.documentName,
       chunk.documentType,
-      vectorString
+      vectorString,
     );
   }
 }
@@ -61,10 +62,11 @@ export async function insertDocumentChunks(chunks: ChunkToInsert[]): Promise<voi
 export async function searchSimilarChunks(
   query: string,
   workspaceId?: string | null,
-  topK = 5
+  topK = 5,
+  embedding?: { model?: string; dimensions?: number },
 ): Promise<RetrievedChunk[]> {
   try {
-    const queryEmbedding = await createEmbedding(query);
+    const queryEmbedding = await createEmbedding(query, embedding);
     const vectorString = `[${queryEmbedding.join(",")}]`;
 
     let sql = `
@@ -99,7 +101,8 @@ export async function searchSimilarChunks(
         documentId: r.documentId,
         documentTitle: r.documentName || "Document",
         content: r.content,
-        similarity: Number(r.similarity.toFixed(4)),
+        similarity: Number(Number(r.similarity).toFixed(4)),
+        match: "vector" as const,
         pageNumber: r.page || undefined,
         section: r.section || undefined,
       }));
@@ -108,33 +111,31 @@ export async function searchSimilarChunks(
     console.warn("Vector search failed, attempting keyword fallback:", err instanceof Error ? err.message : err);
   }
 
-  // Keyword / ILIKE fallback if vector search yielded nothing or errored
   const terms = query
     .split(/\s+/)
     .filter((w) => w.length > 2)
     .slice(0, 3);
-  
+
   const chunks = await prisma.documentChunk.findMany({
     where: {
       ...(workspaceId ? { workspaceId } : {}),
       OR: terms.map((term) => ({
-        content: { contains: term, mode: "insensitive" },
+        content: { contains: term, mode: "insensitive" as const },
       })),
     },
     take: topK,
     include: {
-      document: {
-        select: { name: true },
-      },
+      document: { select: { name: true } },
     },
   });
 
-  return chunks.map((c, idx) => ({
+  return chunks.map((c) => ({
     id: c.id,
     documentId: c.documentId,
     documentTitle: c.document?.name || c.documentName || "Document",
     content: c.content,
-    similarity: Math.max(0.6, 0.9 - idx * 0.08),
+    similarity: null,
+    match: "keyword" as const,
     pageNumber: c.page || undefined,
     section: c.section || undefined,
   }));

@@ -9,10 +9,10 @@ import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
   title: {
-    default: "RAG Starter Kit — Own Your AI Knowledge Base",
-    template: `%s - RAG Starter Kit`,
+    default: "Quill — Own Your AI Knowledge Base",
+    template: `%s - Quill`,
   },
-  description: "Self-hosted, production-grade Next.js 16 RAG starter kit with PostgreSQL, Prisma 7, pgvector, and HeroUI at $0 recurring cost.",
+  description: "Quill is a self-hosted, production-grade Next.js 16 knowledge-base chatbot with PostgreSQL, Prisma 7, pgvector, and HeroUI at $0 recurring cost.",
   icons: {
     icon: "/favicon.ico",
   },

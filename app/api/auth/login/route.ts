@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, createSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { writeAudit } from "@/lib/audit";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -44,16 +45,13 @@ export async function POST(req: NextRequest) {
     });
 
     // Write audit log
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        workspaceId: activeWorkspaceId,
-        event: "USER_LOGIN",
-        severity: "INFO",
-        metadata: { method: "credentials" },
-        ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
-        userAgent: req.headers.get("user-agent"),
-      },
+    await writeAudit({
+      userId: user.id,
+      workspaceId: activeWorkspaceId,
+      event: "USER_LOGIN",
+      metadata: { method: "credentials" },
+      ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
+      userAgent: req.headers.get("user-agent"),
     }).catch(() => {});
 
     const res = NextResponse.json({

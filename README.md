@@ -1,4 +1,4 @@
-# RAG Starter Kit — Own Your AI Knowledge Base
+# Quill — Own Your AI Knowledge Base
 
 > **The fastest way for a TypeScript developer to go from "I have documents" to "I have a production chatbot" — in one weekend, at zero cost.**
 
@@ -72,8 +72,8 @@ graph TD
 
 ### 2. Clone and Install
 ```bash
-git clone https://github.com/rejisterjack/rag-starter-kit.git
-cd rag-starter-kit
+git clone https://github.com/rejisterjack/quill.git
+cd quill
 bun install
 ```
 
@@ -92,8 +92,8 @@ DATABASE_URL="postgresql://user:pass@ep-xyz.neon.tech/neondb?sslmode=require"
 OPENROUTER_API_KEY="sk-or-v1-..."
 NEXT_PUBLIC_APP_URL="http://localhost:7392"
 
-# JWT Secret for Session Auth
-JWT_SECRET="your-super-secret-jwt-key"
+# Session secret. Required in production.
+AUTH_SECRET="your-super-secret-jwt-key"
 ```
 
 ### 4. Push Schema & Seed Initial Workspace
@@ -103,8 +103,8 @@ bun prisma db seed
 ```
 
 Default credentials:
-- **Admin**: `admin@rag-starter.dev` / `Admin1234!`
-- **Demo User**: `user@rag-starter.dev` / `User1234!`
+- **Admin**: `admin@quill.dev` / `Admin1234!`
+- **Demo User**: `demo@quill.dev` / `Demo1234!`
 
 ### 5. Launch the Server
 ```bash
@@ -183,5 +183,7 @@ To embed the AI chatbot into any external help desk, customer portal, or documen
 ---
 
 ## 📄 License
+
+`Document.content` is encrypted at rest with AES-256-GCM (`lib/crypto.ts`). Chunk text used for retrieval stays plaintext so search still works. Set `ENCRYPTION_KEY` in production.
 
 Distributed under the [MIT License](LICENSE). Built for builders.

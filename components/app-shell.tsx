@@ -59,7 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </NextLink>
             <span>•</span>
             <a
-              href="https://github.com/rejisterjack/rag-starter-kit"
+              href="https://github.com/rejisterjack/quill"
               target="_blank"
               rel="noreferrer"
               className="hover:text-primary transition-colors"

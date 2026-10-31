@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { LivePlayground } from "@/components/live-playground";
 import Link from "next/link";
 import { Button, Card, CardHeader, CardContent, CardFooter, Chip } from "@heroui/react";
 import {
@@ -69,7 +70,7 @@ const SAMPLE_PROMPTS: SimulationPrompt[] = [
       { title: "Production Deployment Guide", score: "95.2%", type: "DOCX" },
     ],
     answer:
-      "Most RAG resources are fragmented Python Jupyter notebooks with zero auth, no persistent sessions, and separate frontend glue code. This Starter Kit unifies your client (React 19), server APIs (Next.js 16), database ORM (Prisma 7), and vector storage (pgvector) in a single end-to-end type-safe TypeScript repository. Zero Python microservices needed.",
+      "Most RAG resources are fragmented Python Jupyter notebooks with zero auth, no persistent sessions, and separate frontend glue code. Quill unifies your client (React 19), server APIs (Next.js 16), database ORM (Prisma 7), and vector storage (pgvector) in a single end-to-end type-safe TypeScript repository. Zero Python microservices needed.",
   },
   {
     id: "vector",
@@ -199,7 +200,7 @@ const FAQS: FAQItem[] = [
   {
     question: "Can I embed this chatbot on my existing website (WordPress, Webflow, Shopify)?",
     answer:
-      "Yes! The starter kit includes a dedicated standalone route at `/embed` specifically styled for iframes. In the Admin Overview (/admin), you can copy a single `<iframe src='.../embed' />` code snippet and drop it into any HTML page, customer portal, or help desk.",
+      "Yes! Quill includes a dedicated standalone route at `/embed` specifically styled for iframes. In the Admin Overview (/admin), you can copy a single `<iframe src='.../embed' />` code snippet and drop it into any HTML page, customer portal, or help desk.",
   },
   {
     question: "Can I switch to paid models like OpenAI GPT-4o or Claude 3.5 Sonnet later?",
@@ -216,7 +217,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
 
   const copyCloneCmd = () => {
-    navigator.clipboard.writeText("git clone https://github.com/rejisterjack/rag-starter-kit.git && cd rag-starter-kit && bun install && bun dev");
+    navigator.clipboard.writeText("git clone https://github.com/rejisterjack/quill.git && cd quill && bun install && bun dev");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -350,11 +351,11 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          {/* The RAG Starter Kit Way */}
+          {/* The Quill Way */}
           <Card className="border border-success-500/30 bg-success-500/5 dark:bg-success-500/10 p-6 rounded-3xl space-y-4">
             <CardHeader className="p-0 flex items-center gap-2.5 text-success-600 dark:text-success-400 font-bold text-base">
               <CheckBadgeIcon className="w-6 h-6 shrink-0" />
-              <span>The RAG Starter Kit Way</span>
+              <span>The Quill Way</span>
             </CardHeader>
             <CardContent className="p-0 space-y-3.5 text-xs text-default-600 dark:text-default-300">
               <div className="flex gap-2.5 items-start">
@@ -392,6 +393,7 @@ export default function Home() {
           <p className="text-xs sm:text-sm text-default-500 mt-1 max-w-lg mx-auto">
             Click any prompt below to trace how OpenRouter embeddings, PostgreSQL vector cosine indexing, and SSE generation combine.
           </p>
+          <LivePlayground />
 
           {/* Prompt Selector Pills */}
           <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
@@ -521,7 +523,7 @@ export default function Home() {
             Engineered Specifically For You
           </h2>
           <p className="text-xs sm:text-sm text-default-500 mt-2 max-w-lg mx-auto">
-            Select your role to see how the RAG Starter Kit solves your exact day-to-day workflow bottleneck.
+            Select your role to see how the Quill solves your exact day-to-day workflow bottleneck.
           </p>
 
           {/* Persona Tab Buttons */}
@@ -694,7 +696,7 @@ export default function Home() {
                   )}
                 </button>
                 <div className="text-default-400 select-none"># Clone & start development</div>
-                <div><span className="text-primary font-bold">$</span> git clone https://github.com/rejisterjack/rag-starter-kit.git</div>
+                <div><span className="text-primary font-bold">$</span> git clone https://github.com/rejisterjack/quill.git</div>
                 <div><span className="text-primary font-bold">$</span> bun install && bun dev</div>
               </div>
             </CardContent>
@@ -766,10 +768,10 @@ export default function Home() {
               </p>
             </div>
 
-            {/* RAG Starter Kit */}
+            {/* Quill */}
             <div className="space-y-2 pt-4 md:pt-0 md:px-4">
               <span className="text-xs font-semibold text-success-500 uppercase tracking-wider">
-                RAG Starter Kit
+                Quill
               </span>
               <div className="text-3xl font-black text-success-500">
                 $0.00
@@ -988,8 +990,8 @@ export default function Home() {
               )}
             </button>
             <div className="text-default-500 select-none"># 1. Clone & launch locally in 30 seconds</div>
-            <div><span className="text-primary font-bold">$</span> git clone https://github.com/rejisterjack/rag-starter-kit.git</div>
-            <div><span className="text-primary font-bold">$</span> cd rag-starter-kit && bun install && bun dev</div>
+            <div><span className="text-primary font-bold">$</span> git clone https://github.com/rejisterjack/quill.git</div>
+            <div><span className="text-primary font-bold">$</span> cd quill && bun install && bun dev</div>
           </div>
 
           {/* Action Triggers */}

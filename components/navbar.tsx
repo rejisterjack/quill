@@ -30,7 +30,7 @@ export const Navbar = () => {
             </div>
             <div className="flex flex-col">
               <span className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent font-extrabold tracking-tight text-base leading-tight">
-                RAG Starter Kit
+                Quill
               </span>
               <span className="text-[10px] font-mono text-default-400 font-medium tracking-wide">
                 NEXT.JS 16 • PGVECTOR
@@ -109,7 +109,7 @@ export const Navbar = () => {
 
           <Link
             aria-label="Github"
-            href="https://github.com/rejisterjack/rag-starter-kit"
+            href="https://github.com/rejisterjack/quill"
             rel="noopener noreferrer"
             target="_blank"
             className="text-default-500 hover:text-foreground p-1.5 rounded-lg hover:bg-default-100 dark:hover:bg-default-50/50 transition-colors hidden sm:flex"

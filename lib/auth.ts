@@ -3,6 +3,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { env } from "@/lib/env";
+import { auth as nextAuth } from "@/auth";
 
 export const SESSION_COOKIE_NAME = "rag_session";
 const JWT_SECRET = new TextEncoder().encode(env.AUTH_SECRET);
@@ -56,6 +57,35 @@ export async function verifySessionToken(token: string): Promise<SessionUser | n
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
+  try {
+    const session = await nextAuth();
+    if (session?.user?.id) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          image: true,
+          activeWorkspaceId: true,
+        },
+      });
+      if (user) {
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          image: user.image,
+          activeWorkspaceId: user.activeWorkspaceId,
+        };
+      }
+    }
+  } catch {
+    /* fall through to the app session cookie */
+  }
+
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
