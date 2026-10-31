@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
+import { getToken } from "next-auth/jwt";
 
 const SESSION_COOKIE_NAME = "rag_session";
-const secretKey =
-  process.env.AUTH_SECRET ||
-  process.env.NEXTAUTH_SECRET ||
-  "super-secret-rag-starter-kit-key-1234";
-const JWT_SECRET = new TextEncoder().encode(secretKey);
+
+function sessionSecret(): string {
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET is required in production");
+  }
+  return "dev-only-quill-auth-secret";
+}
+
+const JWT_SECRET = new TextEncoder().encode(sessionSecret());
 
 interface UserSessionPayload {
   id: string;
@@ -40,6 +47,14 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api/auth/login") ||
     pathname.startsWith("/api/auth/register") ||
     pathname.startsWith("/api/auth/logout") ||
+    pathname.startsWith("/api/auth/") ||
+    pathname.startsWith("/api/embed/") ||
+    pathname.startsWith("/embed") ||
+    pathname.startsWith("/api/inngest") ||
+    pathname.startsWith("/api/integrations/") ||
+    pathname.startsWith("/api/scim/") ||
+    pathname.startsWith("/api/waitlist") ||
+    pathname.startsWith("/api/billing/webhook") ||
     pathname === "/favicon.ico" ||
     pathname.match(/\.(png|jpg|jpeg|svg|gif|webp|ico|css|js|woff|woff2)$/)
   ) {
@@ -47,7 +62,19 @@ export async function proxy(request: NextRequest) {
   }
 
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const user = token ? await verifyToken(token) : null;
+  const cookieUser = token ? await verifyToken(token) : null;
+  const authToken = await getToken({ req: request, secret: sessionSecret() });
+  const user =
+    cookieUser ||
+    (authToken?.id
+      ? {
+          id: String(authToken.id),
+          email: String(authToken.email || ""),
+          role: ((authToken.role as "USER" | "ADMIN") || "USER") as "USER" | "ADMIN",
+          name: authToken.name ? String(authToken.name) : undefined,
+          activeWorkspaceId: (authToken.activeWorkspaceId as string | undefined) || undefined,
+        }
+      : null);
 
   const isAdminRoute = pathname.startsWith("/admin") || pathname.startsWith("/api/admin");
   const isChatRoute = pathname.startsWith("/chat");

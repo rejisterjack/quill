@@ -19,25 +19,32 @@ import {
   CpuChipIcon,
 } from "@heroicons/react/24/outline";
 
+function formatShare(formats: Array<{ type: string; count: number }>, types: string[]) {
+  const total = formats.reduce((sum, row) => sum + row.count, 0);
+  if (!total) return 0;
+  const count = formats.filter((row) => types.includes(row.type)).reduce((sum, row) => sum + row.count, 0);
+  return Math.round((count / total) * 100);
+}
+
 export default function AdminAnalyticsPage() {
   const [docCount, setDocCount] = useState(0);
   const [chunkCount, setChunkCount] = useState(0);
   const [chatCount, setChatCount] = useState(0);
+  const [avgRetrievalMs, setAvgRetrievalMs] = useState(0);
+  const [avgSimilarity, setAvgSimilarity] = useState(0);
+  const [formats, setFormats] = useState<Array<{ type: string; count: number }>>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [docsRes, chatsRes] = await Promise.all([
-          fetch("/api/documents"),
-          fetch("/api/chats"),
-        ]);
-        const docs = (await docsRes.json()).documents || [];
-        const chats = (await chatsRes.json()).chats || [];
-        setDocCount(docs.length);
-        setChunkCount(
-          docs.reduce((acc: number, d: any) => acc + (d.chunkCount || 0), 0)
-        );
-        setChatCount(chats.length);
+        const res = await fetch("/api/admin/stats");
+        const stats = await res.json();
+        setDocCount(stats.documents || 0);
+        setChunkCount(stats.chunks || 0);
+        setChatCount(stats.chats || 0);
+        setAvgRetrievalMs(stats.avgRetrievalMs || 0);
+        setAvgSimilarity(stats.avgSimilarity || 0);
+        setFormats(stats.formats || []);
       } catch (err) {
         console.error("Failed to load analytics:", err);
       }
@@ -69,7 +76,7 @@ export default function AdminAnalyticsPage() {
             </Chip>
           </CardHeader>
           <CardContent className="p-0 pt-3">
-            <div className="text-3xl font-black text-foreground">114 ms</div>
+            <div className="text-3xl font-black text-foreground">{avgRetrievalMs} ms</div>
             <p className="text-xs text-default-400 mt-1">pgvector cosine scan on Neon</p>
             <div className="w-full bg-default-100 dark:bg-default-100/30 rounded-full h-1.5 mt-3 overflow-hidden">
               <div className="bg-success-500 h-full rounded-full w-[25%]" />
@@ -88,7 +95,7 @@ export default function AdminAnalyticsPage() {
             </Chip>
           </CardHeader>
           <CardContent className="p-0 pt-3">
-            <div className="text-3xl font-black text-foreground">96.4%</div>
+            <div className="text-3xl font-black text-foreground">{Math.round(avgSimilarity * 1000) / 10}%</div>
             <p className="text-xs text-default-400 mt-1">Threshold confidence cutoff ≥ 0.70</p>
             <div className="w-full bg-default-100 dark:bg-default-100/30 rounded-full h-1.5 mt-3 overflow-hidden">
               <div className="bg-primary h-full rounded-full w-[96%]" />
@@ -134,10 +141,10 @@ export default function AdminAnalyticsPage() {
                   <span className="w-2.5 h-2.5 rounded-full bg-primary" />
                   Markdown & Raw Text
                 </span>
-                <span className="text-default-400 font-mono">60%</span>
+                <span className="text-default-400 font-mono">{formatShare(formats, ["md", "txt"])}%</span>
               </div>
               <div className="w-full bg-default-100 dark:bg-default-100/30 rounded-full h-2 overflow-hidden">
-                <div className="bg-primary h-full rounded-full w-[60%]" />
+                <div className="bg-primary h-full rounded-full" style={{ width: `${formatShare(formats, ["md", "txt"])}%` }} />
               </div>
             </div>
 
@@ -147,10 +154,10 @@ export default function AdminAnalyticsPage() {
                   <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
                   PDF Documents
                 </span>
-                <span className="text-default-400 font-mono">25%</span>
+                <span className="text-default-400 font-mono">{formatShare(formats, ["pdf"])}%</span>
               </div>
               <div className="w-full bg-default-100 dark:bg-default-100/30 rounded-full h-2 overflow-hidden">
-                <div className="bg-red-500 h-full rounded-full w-[25%]" />
+                <div className="bg-red-500 h-full rounded-full" style={{ width: `${formatShare(formats, ["pdf"])}%` }} />
               </div>
             </div>
 
@@ -160,10 +167,10 @@ export default function AdminAnalyticsPage() {
                   <span className="w-2.5 h-2.5 rounded-full bg-cyan-500" />
                   Web Crawled URLs
                 </span>
-                <span className="text-default-400 font-mono">15%</span>
+                <span className="text-default-400 font-mono">{formatShare(formats, ["url"])}%</span>
               </div>
               <div className="w-full bg-default-100 dark:bg-default-100/30 rounded-full h-2 overflow-hidden">
-                <div className="bg-cyan-500 h-full rounded-full w-[15%]" />
+                <div className="bg-cyan-500 h-full rounded-full" style={{ width: `${formatShare(formats, ["url"])}%` }} />
               </div>
             </div>
           </CardContent>

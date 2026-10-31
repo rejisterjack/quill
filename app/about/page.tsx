@@ -23,7 +23,7 @@ export default function AboutPage() {
           <span>The Project Manifesto</span>
         </div>
         <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-foreground">
-          Why We Built RAG Starter Kit
+          Why We Built Quill
         </h1>
         <p className="text-sm sm:text-base text-default-500 max-w-2xl mx-auto leading-relaxed">
           The fastest way for a TypeScript developer to go from "I have documents" to "I have a production chatbot" — in one weekend, at zero recurring cost.
@@ -41,7 +41,7 @@ export default function AboutPage() {
             At the same time, managed SaaS chatbot platforms emerged, charging $240 to $650 per month, plus per-resolution fees, while locking customer knowledge behind proprietary walls.
           </p>
           <p>
-            <strong>We built this starter kit to change that.</strong> We believe you should own your AI, own your data, own your infrastructure, and deploy production-grade software in a single weekend without writing Python or pulling out a credit card.
+            <strong>We built Quill to change that.</strong> We believe you should own your AI, own your data, own your infrastructure, and deploy production-grade software in a single weekend without writing Python or pulling out a credit card.
           </p>
         </div>
       </Card>
@@ -91,7 +91,7 @@ export default function AboutPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <a href="https://github.com/rejisterjack/rag-starter-kit" target="_blank" rel="noreferrer">
+          <a href="https://github.com/rejisterjack/quill" target="_blank" rel="noreferrer">
             <Button size="sm" variant="secondary" className="font-semibold text-xs border border-default-200/60 dark:border-white/10">
               Star on GitHub ★
             </Button>

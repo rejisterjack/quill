@@ -25,25 +25,30 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function AdminDashboardPage() {
-  const { user } = useAuth();
+  const { user, activeWorkspace } = useAuth();
+  const [chatModel, setChatModel] = useState("");
+  const [embeddingModel, setEmbeddingModel] = useState("");
+  const [embeddingDimensions, setEmbeddingDimensions] = useState("1024");
   const [stats, setStats] = useState({
     documents: 0,
     chunks: 0,
     chats: 0,
-    users: 3,
+    users: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [docsRes, chatsRes] = await Promise.all([
+        const [docsRes, chatsRes, statsRes] = await Promise.all([
           fetch("/api/documents"),
           fetch("/api/chats"),
+          fetch("/api/admin/stats"),
         ]);
 
         const docsData = await docsRes.json();
         const chatsData = await chatsRes.json();
+        const statsData = await statsRes.json();
 
         const docs = docsData.documents || [];
         const totalChunks = docs.reduce(
@@ -55,7 +60,7 @@ export default function AdminDashboardPage() {
           documents: docs.length,
           chunks: totalChunks,
           chats: (chatsData.chats || []).length,
-          users: 3,
+          users: statsData.users || 0,
         });
       } catch (err) {
         console.error("Failed to load dashboard stats:", err);
@@ -104,6 +109,28 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
       </div>
+
+      <form
+        className="flex flex-wrap gap-2 items-end"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          if (!activeWorkspace) return;
+          await fetch(`/api/workspaces/${activeWorkspace.id}/models`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chatModel,
+              embeddingModel,
+              embeddingDimensions: Number(embeddingDimensions),
+            }),
+          });
+        }}
+      >
+        <input className="border rounded-lg px-2 py-1 text-xs" placeholder="Chat model" value={chatModel} onChange={(event) => setChatModel(event.target.value)} />
+        <input className="border rounded-lg px-2 py-1 text-xs" placeholder="Embedding model" value={embeddingModel} onChange={(event) => setEmbeddingModel(event.target.value)} />
+        <input className="border rounded-lg px-2 py-1 text-xs w-24" placeholder="Dimensions" value={embeddingDimensions} onChange={(event) => setEmbeddingDimensions(event.target.value)} />
+        <Button type="submit" size="sm" variant="secondary">Save models</Button>
+      </form>
 
       {/* 2. Four Elevated KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -279,7 +306,8 @@ export default function AdminDashboardPage() {
               variant="primary"
               className="text-xs font-bold"
               onPress={() => {
-                const code = `<iframe src="${window.location.origin}/embed" width="100%" height="650" style="border:none; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.15);" allow="clipboard-write"></iframe>`;
+                const key = window.prompt("Paste an embed API key") || "YOUR_KEY";
+                const code = `<iframe src="${window.location.origin}/embed?key=${key}" width="100%" height="650" style="border:none; border-radius:16px;" allow="clipboard-write"></iframe>\n<script src="${window.location.origin}/widget.js" data-key="${key}"></script>`;
                 navigator.clipboard.writeText(code);
                 alert("Iframe embed snippet copied to clipboard!");
               }}

@@ -27,6 +27,7 @@ interface AuthContextType {
   loading: boolean;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
+  switchWorkspace: (workspaceId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -36,6 +37,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   refresh: async () => {},
   logout: async () => {},
+  switchWorkspace: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -79,6 +81,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const switchWorkspace = useCallback(async (workspaceId: string) => {
+    await fetch(`/api/workspaces/${workspaceId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ switch: true }),
+    });
+    await refresh();
+  }, [refresh]);
+
   const activeWorkspace =
     workspaces.find((w) => w.id === user?.activeWorkspaceId) || workspaces[0] || null;
 
@@ -91,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         refresh,
         logout,
+        switchWorkspace,
       }}
     >
       {children}

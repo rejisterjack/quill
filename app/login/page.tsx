@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardHeader, CardContent, CardFooter, Button } from "@heroui/react";
+import { signIn } from "next-auth/react";
 import {
   BoltIcon,
   UserIcon,
@@ -28,6 +29,7 @@ function LoginContent() {
 
   // Login form state
   const [email, setEmail] = useState("");
+  const [ssoSlug, setSsoSlug] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,13 +123,13 @@ function LoginContent() {
   };
 
   const quickFillAdmin = () => {
-    setEmail("admin@rag-starter.dev");
+    setEmail("admin@quill.dev");
     setPassword("Admin1234!");
     setError(null);
   };
 
   const quickFillDemo = () => {
-    setEmail("demo@rag-starter.dev");
+    setEmail("demo@quill.dev");
     setPassword("Demo1234!");
     setError(null);
   };
@@ -144,7 +146,7 @@ function LoginContent() {
               <BoltIcon className="w-6 h-6" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-clip-text text-transparent">
-              RAG Starter Kit
+              Quill
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-default-500">
@@ -209,7 +211,7 @@ function LoginContent() {
                   <input
                     type="email"
                     required
-                    placeholder="admin@rag-starter.dev"
+                    placeholder="admin@quill.dev"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-default-300/70 dark:border-default-100/40 bg-background/80 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
@@ -241,6 +243,33 @@ function LoginContent() {
                   {loading ? "Signing in..." : "Sign In"}
                 </Button>
 
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <Button type="button" variant="secondary" onPress={() => signIn("github")}>GitHub</Button>
+                  <Button type="button" variant="secondary" onPress={() => signIn("google")}>Google</Button>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    value={ssoSlug}
+                    onChange={(event) => setSsoSlug(event.target.value)}
+                    placeholder="Workspace slug"
+                    className="flex-1 border rounded-xl px-3 py-2 text-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onPress={() => {
+                      const slug = ssoSlug.trim();
+                      if (!slug) return;
+                      window.location.href = `/api/auth/saml/${encodeURIComponent(slug)}`;
+                    }}
+                  >
+                    SAML
+                  </Button>
+                  <Button type="button" variant="secondary" onPress={() => signIn(ssoSlug.trim() ? `oidc-${ssoSlug.trim()}` : "oidc")}>
+                    OIDC
+                  </Button>
+                </div>
+
                 <div className="mt-4 pt-4 border-t border-default-200/50 dark:border-default-100/30">
                   <p className="text-[11px] text-default-400 font-medium mb-2.5 text-center flex items-center justify-center gap-1">
                     <KeyIcon className="w-3.5 h-3.5 text-primary" />
@@ -257,7 +286,7 @@ function LoginContent() {
                         Admin
                       </div>
                       <div className="text-[10px] text-default-400 mt-0.5 truncate">
-                        admin@rag-starter.dev
+                        admin@quill.dev
                       </div>
                     </button>
 
@@ -271,7 +300,7 @@ function LoginContent() {
                         Demo User
                       </div>
                       <div className="text-[10px] text-default-400 mt-0.5 truncate">
-                        demo@rag-starter.dev
+                        demo@quill.dev
                       </div>
                     </button>
                   </div>

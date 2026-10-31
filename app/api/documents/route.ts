@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { writeAudit } from "@/lib/audit";
+import { decryptContent } from "@/lib/crypto";
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
@@ -26,6 +28,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     documents: documents.map((doc) => ({
       ...doc,
+      content: decryptContent(doc.content),
       chunkCount: doc._count.chunks || doc.chunkCount,
     })),
   });
@@ -67,14 +70,11 @@ export async function DELETE(req: NextRequest) {
     where: { id },
   });
 
-  await prisma.auditLog.create({
-    data: {
-      userId: user.id,
-      workspaceId: doc.workspaceId,
-      event: "DOCUMENT_DELETED",
-      severity: "INFO",
-      metadata: { documentId: id, name: doc.name },
-    },
+  await writeAudit({
+    userId: user.id,
+    workspaceId: doc.workspaceId,
+    event: "DOCUMENT_DELETED",
+    metadata: { documentId: id, name: doc.name },
   }).catch(() => {});
 
   return NextResponse.json({ success: true });

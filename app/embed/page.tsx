@@ -28,7 +28,7 @@ interface CitationSource {
   documentType: string;
   page?: number;
   section?: string;
-  similarity: number;
+  similarity: number | null;
   content: string;
 }
 
@@ -60,6 +60,8 @@ export default function EmbedChatPage() {
   const [activeCitation, setActiveCitation] = useState<CitationSource | null>(null);
   const [isCitationOpen, setIsCitationOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [brandName, setBrandName] = useState("Quill");
+  const [brandColor, setBrandColor] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -69,6 +71,17 @@ export default function EmbedChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    const key = new URLSearchParams(window.location.search).get("key") || "";
+    fetch(`/api/embed/brand?key=${encodeURIComponent(key)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.brandName) setBrandName(data.brandName);
+        if (data.brandColor) setBrandColor(data.brandColor);
+      })
+      .catch(() => undefined);
+  }, []);
 
   const handleSend = async (textToSend?: string) => {
     const query = textToSend || input;
@@ -95,9 +108,13 @@ export default function EmbedChatPage() {
     const startTime = Date.now();
 
     try {
-      const response = await fetch("/api/chat", {
+      const key = new URLSearchParams(window.location.search).get("key");
+      const response = await fetch("/api/embed/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(key ? { Authorization: `Bearer ${key}` } : {}),
+        },
         body: JSON.stringify({ message: query }),
       });
 
@@ -219,7 +236,7 @@ export default function EmbedChatPage() {
           </div>
           <div>
             <h1 className="text-sm font-semibold tracking-tight leading-tight">
-              AI Knowledge Assistant
+              {brandName}
             </h1>
             <div className="flex items-center gap-1.5 text-[11px] text-default-400">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -360,7 +377,7 @@ export default function EmbedChatPage() {
           </Button>
         </form>
         <div className="flex items-center justify-between text-[10px] text-default-400 mt-1.5 px-1">
-          <span>Powered by RAG Starter Kit</span>
+          <span style={brandColor ? { color: brandColor } : undefined}>Powered by {brandName}</span>
           <span>Zero recurring cost</span>
         </div>
       </div>
@@ -388,7 +405,7 @@ export default function EmbedChatPage() {
                   <strong>Document:</strong> {activeCitation.documentName}
                 </div>
                 <Chip size="sm" color="success" variant="soft">
-                  Match: {Math.round((activeCitation.similarity || 0.85) * 100)}%
+                  {activeCitation.similarity == null ? "Keyword match" : `Match: ${Math.round(activeCitation.similarity * 100)}%`}
                 </Chip>
               </div>
               {activeCitation.page && (

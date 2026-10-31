@@ -1,67 +1,102 @@
+import { decode, encode } from "gpt-tokenizer";
+
 export interface TextChunk {
   content: string;
   chunkIndex: number;
   start: number;
   end: number;
+  /** Token count from gpt-tokenizer (o200k/cl100k via the package default). */
   tokenCount: number;
   section?: string;
   page?: number;
 }
 
 export interface ChunkOptions {
+  /** Window size in tokens. */
   chunkSize?: number;
+  /** Overlap in tokens. */
   chunkOverlap?: number;
 }
 
-export function chunkText(text: string, options?: ChunkOptions): TextChunk[] {
-  const chunkSize = options?.chunkSize ?? 1000;
-  const chunkOverlap = options?.chunkOverlap ?? 200;
+const PAGE_MARK = "\f";
+const DEFAULT_TOKENS = 256;
+const DEFAULT_OVERLAP = 40;
 
-  if (!text || text.trim().length === 0) {
-    return [];
-  }
+function sectionName(text: string): string | undefined {
+  const match = text.match(/^(#{1,4}\s+[^\n]+)/m);
+  return match ? match[1].replace(/^[#\s]+/, "") : undefined;
+}
 
-  const cleanText = text.trim();
+function chunkPage(
+  pageText: string,
+  page: number | undefined,
+  chunkSize: number,
+  overlap: number,
+  baseChar: number,
+  startIndex: number,
+): { chunks: TextChunk[]; nextIndex: number } {
+  const tokens = encode(pageText);
   const chunks: TextChunk[] = [];
-  let startIndex = 0;
-  let chunkIndex = 0;
+  if (tokens.length === 0) return { chunks, nextIndex: startIndex };
 
-  while (startIndex < cleanText.length) {
-    let endIndex = Math.min(startIndex + chunkSize, cleanText.length);
+  let tokenStart = 0;
+  let index = startIndex;
+  let searchFrom = 0;
 
-    // If we are not at the end of text, try to find a sentence or newline break
-    if (endIndex < cleanText.length) {
-      const searchWindow = cleanText.substring(Math.max(startIndex, endIndex - 150), endIndex);
-      const lastBreak = searchWindow.search(/(\n\n|\.\s|\?\s|!\s)/);
-      if (lastBreak !== -1) {
-        endIndex = Math.max(startIndex + 100, endIndex - 150 + lastBreak + 1);
-      }
-    }
-
-    const chunkContent = cleanText.substring(startIndex, endIndex).trim();
-    if (chunkContent.length > 0) {
-      // Approximate token count: ~4 chars per token
-      const tokenCount = Math.ceil(chunkContent.length / 4);
-
-      // Extract optional section heading if markdown header exists
-      const headerMatch = chunkContent.match(/^(#{1,4}\s+[^\n]+)/m);
-      const section = headerMatch ? headerMatch[1].replace(/^[#\s]+/, "") : undefined;
-
+  while (tokenStart < tokens.length) {
+    const tokenEnd = Math.min(tokenStart + chunkSize, tokens.length);
+    const slice = tokens.slice(tokenStart, tokenEnd);
+    const content = decode(slice).trim();
+    if (content.length > 0) {
+      const located = pageText.indexOf(content, searchFrom);
+      const start = baseChar + (located === -1 ? searchFrom : located);
+      const prior = pageText.slice(0, located === -1 ? searchFrom : located);
+      const priorHeadings = prior.match(/^(#{1,4}\s+[^\n]+)/gm);
+      const priorSection = priorHeadings?.at(-1)?.replace(/^[#\s]+/, "");
       chunks.push({
-        content: chunkContent,
-        chunkIndex,
-        start: startIndex,
-        end: endIndex,
-        tokenCount,
-        section,
+        content,
+        chunkIndex: index,
+        start,
+        end: start + content.length,
+        tokenCount: encode(content).length,
+        section: sectionName(content) || priorSection,
+        page,
       });
-
-      chunkIndex++;
+      if (located !== -1) searchFrom = located + 1;
+      index += 1;
     }
-
-    if (endIndex >= cleanText.length) break;
-    startIndex = Math.max(startIndex + 1, endIndex - chunkOverlap);
+    if (tokenEnd >= tokens.length) break;
+    const next = tokenEnd - overlap;
+    tokenStart = next > tokenStart ? next : tokenStart + 1;
   }
+
+  return { chunks, nextIndex: index };
+}
+
+export function chunkText(text: string, options?: ChunkOptions): TextChunk[] {
+  const chunkSize = options?.chunkSize ?? DEFAULT_TOKENS;
+  const chunkOverlap = Math.min(options?.chunkOverlap ?? DEFAULT_OVERLAP, Math.max(0, chunkSize - 1));
+  if (!text || text.trim().length === 0 || chunkSize < 1) return [];
+
+  const hasPages = text.includes(PAGE_MARK);
+  const pages = text.split(PAGE_MARK);
+  const chunks: TextChunk[] = [];
+  let charBase = 0;
+  let index = 0;
+
+  pages.forEach((pageText, pageIndex) => {
+    const result = chunkPage(
+      pageText,
+      hasPages ? pageIndex + 1 : undefined,
+      chunkSize,
+      chunkOverlap,
+      charBase,
+      index,
+    );
+    chunks.push(...result.chunks);
+    index = result.nextIndex;
+    charBase += pageText.length + PAGE_MARK.length;
+  });
 
   return chunks;
 }

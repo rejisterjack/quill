@@ -96,6 +96,11 @@ enum ApiKeyStatus {
   EXPIRED
 }
 
+enum WorkspacePlan {
+  FREE
+  PRO
+}
+
 model User {
   id                String   @id @default(cuid())
   email             String   @unique
@@ -107,11 +112,13 @@ model User {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  workspaces WorkspaceMember[]
-  documents  Document[]
-  chats      Chat[]
-  auditLogs  AuditLog[]
-  apiKeys    ApiKey[]
+  workspaces           WorkspaceMember[]
+  documents            Document[]
+  chats                Chat[]
+  auditLogs            AuditLog[]
+  apiKeys              ApiKey[]
+  passwordResetTokens  PasswordResetToken[]
+  feedback             MessageFeedback[]
 
   @@map("users")
 }
@@ -121,16 +128,36 @@ model Workspace {
   name        String
   slug        String   @unique
   description String?
-  logoUrl     String?
-  ownerId     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  logoUrl               String?
+  ownerId               String
+  chatModel             String        @default("nvidia/nemotron-3.5-lightning:free")
+  embeddingModel        String        @default("liquid/lfm-2.5-embedding-350m:free")
+  embeddingDimensions   Int           @default(1024)
+  plan                  WorkspacePlan @default(FREE)
+  monthlyQueryLimit     Int           @default(100000)
+  monthlyQueryCount     Int           @default(0)
+  monthlyQueryPeriod    String        @default("")
+  brandName             String?
+  brandColor            String?
+  customDomain          String?       @unique
+  ssoMetadata           Json?
+  scimTokenHash         String?
+  slackTeamId           String?       @unique
+  discordGuildId        String?       @unique
+  seatLimit             Int           @default(3)
+  hostingProvider       String?
+  neonProjectId         String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   members   WorkspaceMember[]
   documents Document[]
   chats     Chat[]
   apiKeys   ApiKey[]
   auditLogs AuditLog[]
+  invites    WorkspaceInvite[]
+  tuningJobs TuningJob[]
+  scimGroups ScimGroup[]
 
   @@map("workspaces")
 }
@@ -226,10 +253,60 @@ model Message {
   metadata   Json?
   createdAt  DateTime    @default(now())
 
-  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chat     Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  feedback MessageFeedback[]
 
   @@index([chatId])
   @@map("messages")
+}
+
+model MessageFeedback {
+  id        String         @id @default(cuid())
+  messageId String
+  userId    String
+  rating    FeedbackRating
+  createdAt DateTime       @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_feedback")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model WaitlistEntry {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  tier      String
+  createdAt DateTime @default(now())
+
+  @@map("waitlist_entries")
+}
+
+model WorkspaceInvite {
+  id          String        @id @default(cuid())
+  workspaceId String
+  email       String
+  role        WorkspaceRole @default(MEMBER)
+  tokenHash   String        @unique
+  expiresAt   DateTime
+  createdAt   DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("workspace_invites")
 }
 
 model ApiKey {
@@ -248,6 +325,37 @@ model ApiKey {
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("api_keys")
+}
+
+model TuningJob {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  status         String
+  providerJobId  String?
+  model          String?
+  trainingFileId String?
+  error          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("tuning_jobs")
+}
+
+model ScimGroup {
+  id          String   @id @default(cuid())
+  workspaceId String
+  displayName String
+  externalId  String?
+  members     Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, displayName])
+  @@map("scim_groups")
 }
 
 model AuditLog {

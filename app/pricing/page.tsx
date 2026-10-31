@@ -27,21 +27,27 @@ export default function PricingPage() {
   const [waitlistSuccess, setWaitlistSuccess] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  const handleWaitlistSubmit = (e: React.FormEvent) => {
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!waitlistEmail || !waitlistEmail.includes("@")) return;
-
     setWaitlistSubmitting(true);
-    setTimeout(() => {
-      setWaitlistSubmitting(false);
-      setWaitlistSuccess(true);
-    }, 600);
+    const res = await fetch("/api/waitlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: waitlistEmail, tier: waitlistTier }),
+    });
+    setWaitlistSubmitting(false);
+    if (res.status === 409) {
+      setWaitlistSuccess(false);
+      return;
+    }
+    if (res.ok) setWaitlistSuccess(true);
   };
 
   const faqs = [
     {
       q: "Is the self-hosted Community Edition truly 100% free forever?",
-      a: "Yes, absolutely. The core RAG Starter Kit codebase is published under the open-source MIT License. You can clone it, deploy it on your own server, connect your own PostgreSQL with pgvector, and use free models from OpenRouter (such as Nemotron 3.5 Lightning and Liquid LFM embeddings) with zero licensing or subscription fees.",
+      a: "Yes, absolutely. The core Quill codebase is published under the open-source MIT License. You can clone it, deploy it on your own server, connect your own PostgreSQL with pgvector, and use free models from OpenRouter (such as Nemotron 3.5 Lightning and Liquid LFM embeddings) with zero licensing or subscription fees.",
     },
     {
       q: "When will the paid Pro Cloud and Enterprise tiers launch?",
@@ -645,7 +651,7 @@ export default function PricingPage() {
           <h3 className="text-lg font-bold text-foreground">How Does the Self-Hosted $0 Free Tier Work?</h3>
         </div>
         <p className="text-xs sm:text-sm text-default-500 leading-relaxed">
-          Unlike closed commercial chatbots that bill you $240/month plus $0.99 per resolution surcharge, the RAG Starter Kit is architected to operate fully inside generous, unmetered free tiers of industry standard cloud providers:
+          Unlike closed commercial chatbots that bill you $240/month plus $0.99 per resolution surcharge, the Quill is architected to operate fully inside generous, unmetered free tiers of industry standard cloud providers:
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 text-xs">
