@@ -147,6 +147,8 @@ model Workspace {
   seatLimit             Int           @default(3)
   hostingProvider       String?
   neonProjectId         String?
+  /// Encrypted Neon connection URI. Documents, chunks, chats, and messages use this database when set.
+  targetDatabaseUrl     String?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 

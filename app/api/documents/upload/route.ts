@@ -7,7 +7,13 @@ import { storeOriginal } from "@/lib/storage";
 import { assertCanUpload } from "@/lib/authz";
 import { inngest } from "@/inngest/client";
 import { EmbeddingError } from "@/lib/env";
+import { ingestDocument } from "@/lib/ingest";
+import { prismaForWorkspace } from "@/lib/hosting";
 import type { Prisma } from "@prisma/client";
+
+function useAsyncIngest() {
+  return Boolean(process.env.INNGEST_EVENT_KEY || process.env.INNGEST_DEV);
+}
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
@@ -103,7 +109,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const document = await prisma.document.create({
+    const db = await prismaForWorkspace(workspaceId);
+    const document = await db.document.create({
       data: {
         workspaceId,
         userId: user.id,
@@ -119,15 +126,24 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await inngest.send({ name: "quill/document.ingest", data: { documentId: document.id } });
+    if (useAsyncIngest()) {
+      await inngest.send({ name: "quill/document.ingest", data: { documentId: document.id, workspaceId } });
+    } else {
+      // Community / local: ingest in-process so Cloudinary + Inngest are optional.
+      await ingestDocument(document.id, workspaceId);
+    }
     await writeAudit({
       userId: user.id,
       workspaceId,
       event: "DOCUMENT_UPLOADED",
-      metadata: { documentId: document.id, name: fileName },
+      metadata: { documentId: document.id, name: fileName, async: useAsyncIngest() },
     }).catch(() => {});
 
-    return NextResponse.json({ success: true, document, status: "PENDING" }, { status: 202 });
+    const fresh = await db.document.findUnique({ where: { id: document.id } });
+    return NextResponse.json(
+      { success: true, document: fresh ?? document, status: fresh?.status ?? "PENDING" },
+      { status: useAsyncIngest() ? 202 : 200 },
+    );
   } catch (err) {
     const message = err instanceof EmbeddingError || err instanceof Error ? err.message : "Failed to process document";
     return NextResponse.json({ error: message }, { status: 500 });

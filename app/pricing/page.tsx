@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button, Card, Chip } from "@heroui/react";
 import {
@@ -19,6 +19,16 @@ import {
   CommandLineIcon,
 } from "@heroicons/react/24/outline";
 
+type PlanLimits = {
+  free: { seats: number; monthlyQueries: number };
+  pro: { seats: number; monthlyQueries: number };
+};
+
+const DEFAULT_LIMITS: PlanLimits = {
+  free: { seats: 3, monthlyQueries: 100_000 },
+  pro: { seats: 10, monthlyQueries: 100_000 },
+};
+
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annually">("annually");
   const [waitlistTier, setWaitlistTier] = useState<"pro" | "enterprise">("pro");
@@ -26,6 +36,22 @@ export default function PricingPage() {
   const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
   const [waitlistSuccess, setWaitlistSuccess] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [stripeEnabled, setStripeEnabled] = useState(false);
+  const [limits, setLimits] = useState<PlanLimits>(DEFAULT_LIMITS);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/billing/status")
+      .then((res) => res.json())
+      .then((data) => {
+        const enabled = Boolean(data.stripeEnabled);
+        setStripeEnabled(enabled);
+        if (enabled) setWaitlistTier("enterprise");
+        if (data.limits?.free && data.limits?.pro) setLimits(data.limits);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +70,32 @@ export default function PricingPage() {
     if (res.ok) setWaitlistSuccess(true);
   };
 
+  const handleProCheckout = async () => {
+    setCheckoutError("");
+    setCheckoutBusy(true);
+    const res = await fetch("/api/billing/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    setCheckoutBusy(false);
+    if (res.status === 401) {
+      window.location.href = "/login?next=/admin/billing";
+      return;
+    }
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
+    setCheckoutError(data.error || "Checkout unavailable");
+  };
+
+  const scrollToWaitlist = (tier: "pro" | "enterprise") => {
+    setWaitlistTier(tier);
+    document.getElementById("waitlist-section")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const faqs = [
     {
       q: "Is the self-hosted Community Edition truly 100% free forever?",
@@ -51,23 +103,25 @@ export default function PricingPage() {
     },
     {
       q: "When will the paid Pro Cloud and Enterprise tiers launch?",
-      a: "We are actively engineering our multi-tenant cloud infrastructure and automated OCR pipeline. Pro Cloud and Enterprise Dedicated are scheduled to open for public beta in Q2 2026. Joining the waitlist guarantees early beta access and locks in a 50% discount for your entire first year.",
+      a: stripeEnabled
+        ? "Pro Checkout is available when Stripe is configured on this deployment. Enterprise remains waitlist / custom sales. Self-hosted Community stays free forever."
+        : "We are actively engineering our multi-tenant cloud infrastructure and automated OCR pipeline. Pro Cloud and Enterprise Dedicated open via waitlist until Stripe billing is configured on a given deployment.",
     },
     {
       q: "What features will be exclusive to the paid Pro Cloud tier?",
-      a: "Pro Cloud is built for teams who want zero-devops convenience. It includes fully managed PostgreSQL + pgvector (no need to manage databases or extensions), an automated optical character recognition (OCR) pipeline for scanned PDFs and image receipts, multi-tenant workspaces with role-based team seats, automated Slack and Discord bot integrations, scheduled re-crawling of web documentation, and custom-branded embeddable widgets with your own domain.",
+      a: `Pro Cloud is built for teams who want zero-devops convenience. It includes managed PostgreSQL + pgvector, OCR for scanned PDFs, team seats (up to ${limits.pro.seats}), ${limits.pro.monthlyQueries.toLocaleString()} queries per month, Slack and Discord bots, scheduled re-crawls, and custom-branded embed widgets.`,
     },
     {
       q: "Can I migrate my self-hosted documents and vector embeddings to Pro Cloud later?",
-      a: "Yes. We will provide a 1-click migration CLI command that securely transfers your existing PostgreSQL document chunks, embeddings, and chat histories directly to your managed cloud tenant without re-indexing your files.",
+      a: "Yes. scripts/migrate-to-cloud.ts copies users, workspaces, documents, chats, messages, and pgvector embeddings (via raw SQL) into TARGET_DATABASE_URL — typically the Neon URI stored on the workspace after Provision Neon.",
     },
     {
       q: "Do I need my own OpenRouter or OpenAI API key?",
-      a: "For the self-hosted Free tier, yes: you supply your own free OpenRouter API key in your .env configuration. For the upcoming Pro Cloud and Enterprise tiers, high-throughput inference across premier LLMs and embedding models will be included out of the box with optional BYOK (Bring Your Own Key) support.",
+      a: "For the self-hosted Free tier, yes: you supply your own free OpenRouter API key in your .env configuration. For Pro Cloud and Enterprise, high-throughput inference can be included with optional BYOK support depending on the operator.",
     },
     {
       q: "What security compliance does the Enterprise tier provide?",
-      a: "Enterprise Dedicated provides isolated single-tenant VPC deployments, SAML 2.0 / Okta SSO & SCIM directory sync, tamper-evident audit logs archived to private S3 buckets, HIPAA Business Associate Agreements (BAA), SOC 2 Type II compliance reports, and dedicated account engineering with 99.99% uptime SLAs.",
+      a: "Enterprise tooling includes private VPC compose, SAML/SCIM hooks, and hash-chained audit evidence packets. Those artifacts are control evidence only — not a SOC 2 report and not a signed BAA. Quill does not ship a HIPAA compliance program; see README / VISION.",
     },
   ];
 
@@ -185,6 +239,10 @@ export default function PricingPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-success-500 shrink-0" />
+                  <span><strong>{limits.free.seats} seats / workspace:</strong> Owner + members</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon className="w-4 h-4 text-success-500 shrink-0" />
                   <span><strong>Built-in RBAC:</strong> Admin portal & user roles</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -231,7 +289,7 @@ export default function PricingPage() {
                 </div>
               </div>
               <Chip size="sm" color="accent" variant="primary" className="font-extrabold text-[10px] tracking-wide uppercase">
-                Coming Soon
+                {stripeEnabled ? "Checkout live" : "Waitlist"}
               </Chip>
             </div>
 
@@ -273,7 +331,7 @@ export default function PricingPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-primary shrink-0" />
-                  <span><strong>Multi-Tenant Teams:</strong> Up to 10 workspaces</span>
+                  <span><strong>{limits.pro.seats} seats / workspace:</strong> Team RBAC</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-primary shrink-0" />
@@ -289,28 +347,45 @@ export default function PricingPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-primary shrink-0" />
-                  <span><strong>100,000 Queries / Mo:</strong> Priority queue</span>
+                  <span>
+                    <strong>{limits.pro.monthlyQueries.toLocaleString()} queries / mo:</strong> Enforced in quota
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="space-y-2 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                setWaitlistTier("pro");
-                const el = document.getElementById("waitlist-section");
-                el?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="w-full flex items-center justify-center gap-2 px-4 h-11 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/30 transition-all active:scale-[0.98]"
-            >
-              <PaperAirplaneIcon className="w-4 h-4" />
-              <span>Join Pro Waitlist (50% Off)</span>
-            </button>
-            <p className="text-[11px] text-center text-default-400">
-              Launching Q2 2026 • No payment required today
-            </p>
+            {stripeEnabled ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleProCheckout}
+                  disabled={checkoutBusy}
+                  className="w-full flex items-center justify-center gap-2 px-4 h-11 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/30 transition-all active:scale-[0.98] disabled:opacity-60"
+                >
+                  <span>{checkoutBusy ? "Opening Checkout…" : "Upgrade with Stripe"}</span>
+                </button>
+                {checkoutError && <p className="text-[11px] text-center text-danger">{checkoutError}</p>}
+                <p className="text-[11px] text-center text-default-400">
+                  {limits.pro.seats} seats · {limits.pro.monthlyQueries.toLocaleString()} queries / month
+                </p>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => scrollToWaitlist("pro")}
+                  className="w-full flex items-center justify-center gap-2 px-4 h-11 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold text-sm shadow-lg shadow-indigo-500/30 transition-all active:scale-[0.98]"
+                >
+                  <PaperAirplaneIcon className="w-4 h-4" />
+                  <span>Join Pro Waitlist (50% Off)</span>
+                </button>
+                <p className="text-[11px] text-center text-default-400">
+                  Stripe not configured on this deploy · No payment required today
+                </p>
+              </>
+            )}
           </div>
         </Card>
 
@@ -364,7 +439,7 @@ export default function PricingPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-purple-500 shrink-0" />
-                  <span><strong>HIPAA & SOC 2 Type II:</strong> Immutable audit logs</span>
+                  <span><strong>Control evidence packet:</strong> Not SOC 2 / not a BAA</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircleIcon className="w-4 h-4 text-purple-500 shrink-0" />
@@ -389,37 +464,39 @@ export default function PricingPage() {
           <div className="space-y-2 pt-2">
             <button
               type="button"
-              onClick={() => {
-                setWaitlistTier("enterprise");
-                const el = document.getElementById("waitlist-section");
-                el?.scrollIntoView({ behavior: "smooth" });
-              }}
+              onClick={() => scrollToWaitlist("enterprise")}
               className="w-full flex items-center justify-center gap-2 px-4 h-11 rounded-xl bg-default-100 dark:bg-default-50/20 hover:bg-default-200 dark:hover:bg-default-50/40 text-foreground font-bold text-sm border border-default-200/60 dark:border-default-100/30 transition-all active:scale-[0.98]"
             >
               <span>Join Enterprise Waitlist</span>
             </button>
             <p className="text-[11px] text-center text-default-400">
-              Custom MSA, invoice billing & BAA available
+              Custom MSA / invoice sales · HIPAA BAA is not offered by this codebase
             </p>
           </div>
         </Card>
       </div>
 
-      {/* Interactive Waitlist Capture Form */}
+      {/* Waitlist when Stripe is off; Enterprise always; Pro Checkout when Stripe is on */}
       <div id="waitlist-section" className="scroll-mt-24">
         <Card className="border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-6 sm:p-10 rounded-3xl relative overflow-hidden">
           <div className="max-w-2xl mx-auto space-y-6 text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/40 bg-primary/20 text-primary text-xs font-bold">
               <ClockIcon className="w-3.5 h-3.5" />
-              <span>Paid Tiers Launching Q2 2026</span>
+              <span>
+                {stripeEnabled
+                  ? "Enterprise waitlist · Pro via Stripe Checkout"
+                  : "Pro & Enterprise waitlist (Stripe unset)"}
+              </span>
             </div>
 
             <div className="space-y-2">
               <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
-                Get Early Beta Access & 50% Off for Life
+                {stripeEnabled ? "Enterprise early access" : "Get Early Beta Access & 50% Off for Life"}
               </h2>
               <p className="text-xs sm:text-sm text-default-500 max-w-lg mx-auto">
-                Join 840+ developers on the waitlist for Pro Cloud and Enterprise. We’ll notify you first when slots open up.
+                {stripeEnabled
+                  ? "Pro upgrades use Stripe Checkout from this page or /admin/billing. Enterprise remains custom — join the waitlist below."
+                  : "Join the waitlist for Pro Cloud and Enterprise. We’ll notify you when this deployment enables Stripe Checkout."}
               </p>
             </div>
 
@@ -636,8 +713,8 @@ export default function PricingPage() {
               <tr>
                 <td className="p-3.5 sm:p-4 font-semibold text-foreground">Compliance Standards</td>
                 <td className="p-3.5 sm:p-4">Self-governed</td>
-                <td className="p-3.5 sm:p-4">SOC 2 Type I ready</td>
-                <td className="p-3.5 sm:p-4 font-bold text-purple-400">SOC 2 Type II, HIPAA BAA, GDPR</td>
+                <td className="p-3.5 sm:p-4">Control evidence only</td>
+                <td className="p-3.5 sm:p-4 font-bold text-purple-400">Not SOC 2 / not a BAA (evidence packet)</td>
               </tr>
             </tbody>
           </table>

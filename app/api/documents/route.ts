@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 import { writeAudit } from "@/lib/audit";
 import { decryptContent } from "@/lib/crypto";
 
@@ -13,7 +14,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const workspaceId = searchParams.get("workspaceId") || user.activeWorkspaceId;
 
-  const documents = await prisma.document.findMany({
+  const db = workspaceId ? await prismaForWorkspace(workspaceId) : prisma;
+  const documents = await db.document.findMany({
     where: {
       ...(workspaceId ? { workspaceId } : {}),
     },
@@ -53,20 +55,23 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Document ID is required" }, { status: 400 });
   }
 
-  const doc = await prisma.document.findUnique({
-    where: { id },
-  });
+  const workspaceId = searchParams.get("workspaceId") || user.activeWorkspaceId;
+  const db = workspaceId ? await prismaForWorkspace(workspaceId) : prisma;
+  const doc =
+    (await db.document.findUnique({ where: { id } })) ||
+    (await prisma.document.findUnique({ where: { id } }));
 
   if (!doc) {
     return NextResponse.json({ error: "Document not found" }, { status: 404 });
   }
 
-  // Delete chunks and document
-  await prisma.documentChunk.deleteMany({
+  const tenantId = doc.workspaceId || workspaceId;
+  const store = tenantId ? await prismaForWorkspace(tenantId) : prisma;
+  await store.documentChunk.deleteMany({
     where: { documentId: id },
   });
 
-  await prisma.document.delete({
+  await store.document.delete({
     where: { id },
   });
 

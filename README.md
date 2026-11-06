@@ -96,6 +96,8 @@ NEXT_PUBLIC_APP_URL="http://localhost:7392"
 AUTH_SECRET="your-super-secret-jwt-key"
 ```
 
+**Local Community:** Cloudinary and Inngest are optional. Leave `CLOUDINARY_URL` empty to store uploads under `.quill-uploads` on disk. Document ingest runs in-process without Inngest when those cloud services are unset—enough for local Community Edition. Add Cloudinary and/or Inngest when you want durable object storage and background jobs in a shared deploy.
+
 ### 4. Push Schema & Seed Initial Workspace
 ```bash
 bun prisma db push
@@ -181,6 +183,10 @@ To embed the AI chatbot into any external help desk, customer portal, or documen
 - [x] **Zero Recurring Cost** architecture verified with OpenRouter free tier
 
 ---
+
+## HIPAA / SOC 2 (won't build)
+
+Quill **will not** ship a HIPAA compliance program, signed Business Associate Agreement (BAA), or SOC 2 Type I/II report. `lib/compliance.ts` produces a **control-evidence** packet (access, encryption, audit chain, VPC compose hash) that is explicitly **not** an auditor attestation and **not** a BAA. The VPC compose under `deploy/vpc/` is a private-network style layout with documented limitations — not an air-gapped compliance boundary. Do not put PHI in Quill unless you separately obtain the legal and operational controls your jurisdiction requires.
 
 ## 📄 License
 

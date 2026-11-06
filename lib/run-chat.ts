@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 import { streamChatCompletion } from "@/lib/ai";
 import { retrieveWithAgent } from "@/lib/agent";
 import { writeAudit } from "@/lib/audit";
@@ -21,6 +22,7 @@ export async function runGroundedChat(input: {
     });
   }
 
+  const db = await prismaForWorkspace(input.workspaceId);
   const workspace = await prisma.workspace.findUnique({ where: { id: input.workspaceId } });
   const started = Date.now();
   const sources = await retrieveWithAgent({
@@ -31,24 +33,25 @@ export async function runGroundedChat(input: {
       model: workspace?.embeddingModel,
       dimensions: workspace?.embeddingDimensions,
     },
+    db,
   });
   const retrievalMs = Date.now() - started;
 
   let chatId = input.chatId || null;
   if (chatId) {
-    const existing = await prisma.chat.findUnique({ where: { id: chatId }, select: { userId: true } });
+    const existing = await db.chat.findUnique({ where: { id: chatId }, select: { userId: true } });
     if (!existing || (existing.userId !== input.userId && !input.allowAdminOverride)) {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
     }
   } else {
     const title = input.message.trim().split(/\s+/).slice(0, 6).join(" ") || "New Conversation";
-    const created = await prisma.chat.create({
+    const created = await db.chat.create({
       data: { title, userId: input.userId, workspaceId: input.workspaceId, model: workspace?.chatModel },
     });
     chatId = created.id;
   }
 
-  await prisma.message.create({
+  await db.message.create({
     data: { chatId, role: "USER", content: input.message.trim() },
   });
   await writeAudit({
@@ -58,7 +61,7 @@ export async function runGroundedChat(input: {
     metadata: { chatId, promptLength: input.message.length },
   }).catch(() => {});
 
-  const history = await prisma.message.findMany({
+  const history = await db.message.findMany({
     where: { chatId },
     orderBy: { createdAt: "asc" },
     take: 10,
@@ -128,7 +131,7 @@ export async function runGroundedChat(input: {
         controller.enqueue(encoder.encode(`event: token\ndata: ${JSON.stringify({ token: fallbackText })}\n\n`));
       }
 
-      const assistantMessage = await prisma.message.create({
+      const assistantMessage = await db.message.create({
         data: {
           chatId: chatId!,
           role: "ASSISTANT",

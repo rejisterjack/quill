@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 
 export async function GET(
   req: NextRequest,
@@ -13,7 +14,8 @@ export async function GET(
 
   const { id } = await params;
 
-  const chunks = await prisma.documentChunk.findMany({
+  const db = user.activeWorkspaceId ? await prismaForWorkspace(user.activeWorkspaceId) : prisma;
+  const chunks = await db.documentChunk.findMany({
     where: { documentId: id },
     orderBy: { index: "asc" },
     select: {

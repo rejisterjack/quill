@@ -1,11 +1,13 @@
 import { searchSimilarChunks, type RetrievedChunk } from "@/lib/vector";
 import { writeAudit } from "@/lib/audit";
+import type { PrismaClient } from "@/lib/prisma";
 
 export async function retrieveWithAgent(input: {
   query: string;
   workspaceId?: string | null;
   userId?: string | null;
   embedding?: { model?: string; dimensions?: number };
+  db?: PrismaClient;
 }): Promise<RetrievedChunk[]> {
   const searchLike = /where|what|how|why|policy|document|find|summar/i.test(input.query);
   const kind = searchLike ? "search" : "chitchat";
@@ -18,7 +20,7 @@ export async function retrieveWithAgent(input: {
 
   if (kind === "chitchat") return [];
 
-  const first = await searchSimilarChunks(input.query, input.workspaceId, 4, input.embedding);
+  const first = await searchSimilarChunks(input.query, input.workspaceId, 4, input.embedding, input.db);
   await writeAudit({
     event: "AGENT_TOOL_CALLED",
     userId: input.userId,
@@ -38,6 +40,7 @@ export async function retrieveWithAgent(input: {
       input.workspaceId,
       4,
       input.embedding,
+      input.db,
     );
     await writeAudit({
       event: "AGENT_TOOL_CALLED",

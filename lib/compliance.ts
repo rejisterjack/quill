@@ -17,7 +17,8 @@ export async function complianceEvidence() {
   return {
     generatedAt: new Date().toISOString(),
     kind: "control-evidence",
-    attestation: "This packet is evidence of controls in the software. It is not a SOC 2 report and not a signed BAA.",
+    attestation:
+      "This packet is evidence of controls implemented in the software. It is explicitly not a SOC 2 Type I/II report, not an auditor attestation, and not a signed Business Associate Agreement (BAA).",
     controls: [
       {
         id: "CC6.1",
@@ -56,6 +57,7 @@ export async function complianceEvidence() {
     baaWorksheet: {
       title: "Business associate agreement worksheet",
       status: "unsigned",
+      note: "Quill does not issue or sign a HIPAA BAA. This worksheet is an operator checklist only.",
       safeguards: ["AES-256-GCM for document content", "Hash-chained audit log", "Private VPC compose", "Role and API-key access"],
       parties: { coveredEntity: "", businessAssociate: "Quill operator" },
     },

@@ -1,3 +1,7 @@
+# Quill private VPC-style compose — limitations (not a compliance boundary):
+# - `networks.private.internal: false` so the app can still reach OpenRouter / Neon / Stripe.
+# - Postgres has no published host ports, but this is not an air-gapped VPC, not SOC 2, and not HIPAA.
+# - Secrets below are placeholders; rotate them and do not treat this file as a BAA or audit report.
 services:
   postgres:
     image: pgvector/pgvector:pg16

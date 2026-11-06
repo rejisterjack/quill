@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 import { writeAudit } from "@/lib/audit";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -8,11 +9,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   const body = await req.json();
-  const chat = await prisma.chat.findUnique({ where: { id }, include: { messages: { orderBy: { createdAt: "asc" } } } });
+  const db = user.activeWorkspaceId ? await prismaForWorkspace(user.activeWorkspaceId) : prisma;
+  const chat = await db.chat.findUnique({ where: { id }, include: { messages: { orderBy: { createdAt: "asc" } } } });
   if (!chat || chat.userId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const index = chat.messages.findIndex((message) => message.id === body.messageId);
   const kept = index >= 0 ? chat.messages.slice(0, index + 1) : chat.messages;
-  const branched = await prisma.chat.create({
+  const branched = await db.chat.create({
     data: {
       userId: user.id,
       workspaceId: chat.workspaceId,

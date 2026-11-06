@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { runGroundedChat } from "@/lib/run-chat";
+import { collectSseText } from "@/lib/sse-text";
 import { env } from "@/lib/env";
 
 export async function POST(req: NextRequest) {
@@ -23,17 +24,21 @@ export async function POST(req: NextRequest) {
     return Response.json({ challenge: payload.challenge });
   }
   const teamId = payload.team_id || payload.team?.id;
-  const text = payload.event?.text || "";
+  const text = payload.event?.text || payload.text || "";
   const workspace = await prisma.workspace.findFirst({ where: { slackTeamId: teamId } });
   if (!workspace) return new Response(JSON.stringify({ error: "Unknown team" }), { status: 404 });
   const owner = await prisma.user.findUnique({ where: { id: workspace.ownerId } });
   if (!owner) return new Response(JSON.stringify({ error: "No owner" }), { status: 404 });
   const chat = await runGroundedChat({
-    message: text,
+    message: text.replace(/<@[A-Z0-9]+>/g, "").trim(),
     userId: owner.id,
     workspaceId: workspace.id,
     eventName: "embed_message",
   });
-  const answer = await chat.text();
-  return new Response(answer, { headers: { "Content-Type": chat.headers.get("Content-Type") || "text/plain" } });
+  const answer = (await collectSseText(chat)).slice(0, 3500) || "No answer from the knowledge base.";
+  // Slash-command / interactive style: usable text, never raw SSE frames.
+  return Response.json({
+    response_type: "in_channel",
+    text: answer,
+  });
 }
