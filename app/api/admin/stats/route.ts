@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -13,13 +14,14 @@ export async function GET() {
     healthy = false;
   }
 
+  const db = user.activeWorkspaceId ? await prismaForWorkspace(user.activeWorkspaceId) : prisma;
   const [users, documents, chunks, chats, formats, messages] = await Promise.all([
     prisma.user.count(),
-    prisma.document.count(),
-    prisma.documentChunk.count(),
-    prisma.chat.count(),
-    prisma.document.groupBy({ by: ["contentType"], _count: { _all: true } }),
-    prisma.message.findMany({
+    db.document.count(),
+    db.documentChunk.count(),
+    db.chat.count(),
+    db.document.groupBy({ by: ["contentType"], _count: { _all: true } }),
+    db.message.findMany({
       where: { role: "ASSISTANT" },
       select: { metadata: true },
       take: 200,

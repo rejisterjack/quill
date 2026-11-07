@@ -1,9 +1,11 @@
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 import { writeAudit } from "@/lib/audit";
 
 export async function tuningJsonl(workspaceId: string) {
-  const messages = await prisma.message.findMany({
+  const db = await prismaForWorkspace(workspaceId);
+  const messages = await db.message.findMany({
     where: { chat: { workspaceId }, role: "ASSISTANT" },
     orderBy: { createdAt: "asc" },
     include: { chat: { include: { messages: { orderBy: { createdAt: "asc" } } } } },
@@ -76,6 +78,21 @@ export async function startTuningJob(workspaceId: string, userId: string) {
   return job;
 }
 
+export async function applyFineTunedModel(workspaceId: string, modelId: string, userId?: string) {
+  if (!modelId.trim()) throw new Error("Fine-tuned model id is required");
+  const workspace = await prisma.workspace.update({
+    where: { id: workspaceId },
+    data: { chatModel: modelId.trim() },
+  });
+  await writeAudit({
+    event: "WORKSPACE_SETTINGS_CHANGED",
+    userId,
+    workspaceId,
+    metadata: { chatModel: workspace.chatModel, source: "fine-tune" },
+  }).catch(() => {});
+  return workspace;
+}
+
 export async function refreshTuningJob(jobId: string) {
   const job = await prisma.tuningJob.findUnique({ where: { id: jobId } });
   if (!job?.providerJobId || !env.OPENAI_API_KEY) return job;
@@ -84,12 +101,18 @@ export async function refreshTuningJob(jobId: string) {
   });
   if (!response.ok) return job;
   const payload = (await response.json()) as { status?: string; fine_tuned_model?: string; error?: { message?: string } };
-  return prisma.tuningJob.update({
+  const modelId = payload.fine_tuned_model || job.model;
+  const updated = await prisma.tuningJob.update({
     where: { id: job.id },
     data: {
       status: payload.status || job.status,
-      model: payload.fine_tuned_model || job.model,
+      model: modelId,
       error: payload.error?.message || null,
     },
   });
+  const succeeded = (payload.status || "").toLowerCase() === "succeeded";
+  if (succeeded && payload.fine_tuned_model) {
+    await applyFineTunedModel(job.workspaceId, payload.fine_tuned_model);
+  }
+  return updated;
 }

@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/lib/audit";
+import { PLAN_LIMITS } from "@/lib/plan-limits";
 
 function stripeClient() {
   if (!env.STRIPE_SECRET_KEY) throw new Error("STRIPE_SECRET_KEY is required");
@@ -25,12 +26,16 @@ export async function createProCheckout(workspaceId: string, email: string) {
 export async function applyProPlan(workspaceId: string) {
   const workspace = await prisma.workspace.update({
     where: { id: workspaceId },
-    data: { plan: "PRO", seatLimit: 10, monthlyQueryLimit: 100000 },
+    data: {
+      plan: "PRO",
+      seatLimit: PLAN_LIMITS.pro.seats,
+      monthlyQueryLimit: PLAN_LIMITS.pro.monthlyQueries,
+    },
   });
   await writeAudit({
     event: "WORKSPACE_SETTINGS_CHANGED",
     workspaceId,
-    metadata: { plan: "PRO", seatLimit: 10, source: "stripe" },
+    metadata: { plan: "PRO", seatLimit: PLAN_LIMITS.pro.seats, source: "stripe" },
   }).catch(() => {});
   return workspace;
 }

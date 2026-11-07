@@ -26,6 +26,7 @@ const navLinks = [
   { href: "/admin/connectors", label: "Connectors", icon: CircleStackIcon, description: "Notion, GitHub, and more" },
   { href: "/admin/billing", label: "Plan", icon: CpuChipIcon, description: "Seats, Pro, and Neon" },
   { href: "/admin/compliance", label: "Compliance", icon: LockClosedIcon, description: "Control evidence" },
+  { href: "/admin/enterprise", label: "Enterprise", icon: ShieldCheckIcon, description: "SAML, SCIM, tenant DB" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

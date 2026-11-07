@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 import { getConnector, listConnectors } from "@/lib/connectors/registry";
 import { inngest } from "@/inngest/client";
 import { storeOriginal } from "@/lib/storage";
@@ -20,13 +20,14 @@ export async function POST(req: NextRequest) {
   const workspaceId = body.workspaceId || user.activeWorkspaceId;
   if (!workspaceId) return NextResponse.json({ error: "No workspace" }, { status: 400 });
   const docs = await connector.listUpdates(body.config || {});
+  const db = await prismaForWorkspace(workspaceId);
   const created = [];
   for (const doc of docs) {
     const stored = await storeOriginal({
       bytes: Buffer.from(doc.text || "", "utf8"),
       filename: `${doc.title}.txt`,
     });
-    const record = await prisma.document.create({
+    const record = await db.document.create({
       data: {
         workspaceId,
         userId: user.id,
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
         metadata: { inlineText: doc.text, externalId: doc.externalId },
       },
     });
-    await inngest.send({ name: "quill/document.ingest", data: { documentId: record.id } });
+    await inngest.send({ name: "quill/document.ingest", data: { documentId: record.id, workspaceId } });
     created.push(record.id);
   }
   return NextResponse.json({ created });

@@ -40,3 +40,21 @@ test("embed without a key is unauthorized", async ({ request }) => {
   });
   expect(response.status()).toBe(401);
 });
+
+test("billing status exposes stripe flag and plan limits", async ({ request }) => {
+  const response = await request.get("/api/billing/status");
+  expect(response.ok()).toBeTruthy();
+  const body = await response.json();
+  expect(typeof body.stripeEnabled).toBe("boolean");
+  expect(body.limits.free.seats).toBe(3);
+  expect(body.limits.pro.seats).toBe(10);
+  expect(body.limits.pro.monthlyQueries).toBe(100000);
+});
+
+test("pricing page shows Pro waitlist or Stripe checkout path", async ({ page }) => {
+  await page.goto("/pricing");
+  await expect(page.getByRole("heading", { name: /Free Today/i })).toBeVisible();
+  const stripeCta = page.getByRole("button", { name: /Upgrade with Stripe/i });
+  const waitlistCta = page.getByRole("button", { name: /Join Pro Waitlist/i });
+  await expect(stripeCta.or(waitlistCta)).toBeVisible();
+});

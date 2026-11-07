@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 
 export async function GET(
   req: NextRequest,
@@ -13,7 +14,8 @@ export async function GET(
 
   const { id } = await params;
 
-  const chat = await prisma.chat.findUnique({
+  const db = user.activeWorkspaceId ? await prismaForWorkspace(user.activeWorkspaceId) : prisma;
+  const chat = await db.chat.findUnique({
     where: { id },
     select: { userId: true },
   });
@@ -26,7 +28,7 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden: You do not have permission to view these messages." }, { status: 403 });
   }
 
-  const messages = await prisma.message.findMany({
+  const messages = await db.message.findMany({
     where: { chatId: id },
     orderBy: { createdAt: "asc" },
   });

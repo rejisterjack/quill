@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 import { writeAudit } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
@@ -12,7 +13,8 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const workspaceId = searchParams.get("workspaceId") || user.activeWorkspaceId;
 
-  const chats = await prisma.chat.findMany({
+  const db = workspaceId ? await prismaForWorkspace(workspaceId) : prisma;
+  const chats = await db.chat.findMany({
     where: {
       userId: user.id,
       ...(workspaceId ? { workspaceId } : {}),
@@ -48,8 +50,9 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: "Chat ID required" }, { status: 400 });
   }
 
-  const existing = await prisma.chat.findFirst({ where: { id, userId: user.id } });
-  await prisma.chat.deleteMany({
+  const db = user.activeWorkspaceId ? await prismaForWorkspace(user.activeWorkspaceId) : prisma;
+  const existing = await db.chat.findFirst({ where: { id, userId: user.id } });
+  await db.chat.deleteMany({
     where: {
       id,
       userId: user.id,

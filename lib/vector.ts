@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma as defaultPrisma, type PrismaClient } from "@/lib/prisma";
 import { createEmbedding } from "@/lib/ai";
 
 export interface RetrievedChunk {
@@ -27,12 +27,15 @@ export interface ChunkToInsert {
   embedding: number[];
 }
 
-export async function insertDocumentChunks(chunks: ChunkToInsert[]): Promise<void> {
+export async function insertDocumentChunks(
+  chunks: ChunkToInsert[],
+  db: PrismaClient = defaultPrisma,
+): Promise<void> {
   for (const chunk of chunks) {
     const id = `chunk_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
     const vectorString = `[${chunk.embedding.join(",")}]`;
 
-    await prisma.$executeRawUnsafe(
+    await db.$executeRawUnsafe(
       `INSERT INTO document_chunks (
         id, "documentId", "userId", "workspaceId", content,
         index, start, "end", page, section,
@@ -64,6 +67,7 @@ export async function searchSimilarChunks(
   workspaceId?: string | null,
   topK = 5,
   embedding?: { model?: string; dimensions?: number },
+  db: PrismaClient = defaultPrisma,
 ): Promise<RetrievedChunk[]> {
   try {
     const queryEmbedding = await createEmbedding(query, embedding);
@@ -85,7 +89,7 @@ export async function searchSimilarChunks(
     sql += ` ORDER BY embedding <=> $1::vector ASC LIMIT $${params.length + 1}`;
     params.push(topK);
 
-    const rows = (await prisma.$queryRawUnsafe(sql, ...params)) as Array<{
+    const rows = (await db.$queryRawUnsafe(sql, ...params)) as Array<{
       id: string;
       documentId: string;
       documentName: string;
@@ -116,7 +120,7 @@ export async function searchSimilarChunks(
     .filter((w) => w.length > 2)
     .slice(0, 3);
 
-  const chunks = await prisma.documentChunk.findMany({
+  const chunks = await db.documentChunk.findMany({
     where: {
       ...(workspaceId ? { workspaceId } : {}),
       OR: terms.map((term) => ({

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { prismaForWorkspace } from "@/lib/hosting";
 import { parseDocx, parseImage, parsePdf, parseText } from "@/lib/parsers";
 import { crawlUrl } from "@/lib/crawler";
 import { chunkText } from "@/lib/chunker";
@@ -10,11 +11,17 @@ import { downloadOriginal, storeOriginal } from "@/lib/storage";
 import { captureProductEvent } from "@/lib/analytics";
 import { EmbeddingError } from "@/lib/env";
 
-export async function ingestDocument(documentId: string): Promise<void> {
-  const document = await prisma.document.findUnique({ where: { id: documentId } });
+export async function ingestDocument(documentId: string, workspaceId?: string): Promise<void> {
+  const tenant = workspaceId ? await prismaForWorkspace(workspaceId) : prisma;
+  let document = await tenant.document.findUnique({ where: { id: documentId } });
+  let store = tenant;
+  if (!document) {
+    document = await prisma.document.findUnique({ where: { id: documentId } });
+    store = prisma;
+  }
   if (!document) return;
 
-  await prisma.document.update({
+  await store.document.update({
     where: { id: documentId },
     data: { status: "PROCESSING" },
   });
@@ -39,7 +46,7 @@ export async function ingestDocument(documentId: string): Promise<void> {
         bytes: Buffer.from(text, "utf8"),
         filename: `${document.name}.txt`,
       });
-      await prisma.document.update({
+      await store.document.update({
         where: { id: documentId },
         data: {
           storageKey: stored.storageKey,
@@ -99,8 +106,8 @@ export async function ingestDocument(documentId: string): Promise<void> {
       });
     }
 
-    await insertDocumentChunks(chunksToInsert);
-    await prisma.document.update({
+    await insertDocumentChunks(chunksToInsert, store);
+    await store.document.update({
       where: { id: documentId },
       data: {
         status: "COMPLETED",
@@ -120,7 +127,7 @@ export async function ingestDocument(documentId: string): Promise<void> {
       chunks: textChunks.length,
     });
   } catch (err) {
-    await prisma.document.update({
+    await store.document.update({
       where: { id: documentId },
       data: { status: "FAILED" },
     });

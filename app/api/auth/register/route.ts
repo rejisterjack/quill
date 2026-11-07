@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, createSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
+import { isDemoMode } from "@/lib/demo";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -12,6 +13,16 @@ const registerSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    if (isDemoMode()) {
+      return NextResponse.json(
+        {
+          error:
+            "Registration is disabled on the public demo. Use demo@quill.dev / Demo1234!.",
+        },
+        { status: 403 },
+      );
+    }
+
     const body = await req.json();
     const { name, email, password } = registerSchema.parse(body);
 

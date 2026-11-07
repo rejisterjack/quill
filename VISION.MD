@@ -86,6 +86,10 @@ a day.
   self-hosted. No enterprise support contracts.
 - **Developers who want a no-code configuration experience.** Code-first,
   always.
+- **HIPAA-covered workloads.** Quill will not build a HIPAA compliance
+  program, signed BAA, or SOC 2 report into this codebase. Operators get
+  engineering control evidence (`lib/compliance.ts`) only. Do not store PHI
+  unless you independently obtain the legal and operational controls required.
 
 ---
 

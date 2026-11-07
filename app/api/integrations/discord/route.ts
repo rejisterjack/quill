@@ -2,6 +2,7 @@ import { createPublicKey, verify } from "crypto";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { runGroundedChat } from "@/lib/run-chat";
+import { collectSseText } from "@/lib/sse-text";
 import { env } from "@/lib/env";
 
 function discordSignatureValid(rawBody: string, signature: string, timestamp: string) {
@@ -27,7 +28,10 @@ export async function POST(req: NextRequest) {
   const body = JSON.parse(rawBody);
   if (body.type === 1) return Response.json({ type: 1 });
   const guildId = body.guild_id;
-  const content = body.data?.options?.find((option: { name: string }) => option.name === "question")?.value || body.data?.content || "";
+  const content =
+    body.data?.options?.find((option: { name: string }) => option.name === "question")?.value ||
+    body.data?.content ||
+    "";
   const workspace = await prisma.workspace.findFirst({ where: { discordGuildId: guildId } });
   if (!workspace) return Response.json({ type: 4, data: { content: "This server is not linked." } });
   const owner = await prisma.user.findUnique({ where: { id: workspace.ownerId } });
@@ -38,7 +42,6 @@ export async function POST(req: NextRequest) {
     workspaceId: workspace.id,
     eventName: "embed_message",
   });
-  const raw = await chat.text();
-  const answer = raw.includes("event: token") ? "Answer is streaming in Quill." : raw.slice(0, 1800);
-  return Response.json({ type: 4, data: { content: answer || "No answer." } });
+  const answer = (await collectSseText(chat)).slice(0, 1800) || "No answer from the knowledge base.";
+  return Response.json({ type: 4, data: { content: answer } });
 }

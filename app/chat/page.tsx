@@ -604,9 +604,11 @@ function ChatContent() {
                       if (!activeChatId) return;
                       const res = await fetch(`/api/chats/${activeChatId}/branch`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messageId: msg.id }) });
                       const data = await res.json();
-                      if (data.chat?.id) {
-                        setActiveChatId(data.chat.id);
+                      const nextId = data.chatId ?? data.chat?.id;
+                      if (nextId) {
+                        setActiveChatId(nextId);
                         loadChats();
+                        loadMessages(nextId);
                       }
                     }}>Branch</button>
                   </div>
@@ -625,30 +627,6 @@ function ChatContent() {
             }}
             className="flex items-center gap-2"
           >
-            <button
-              type="button"
-              className="text-[11px] px-2"
-              onClick={async () => {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const recorder = new MediaRecorder(stream);
-                const chunks: Blob[] = [];
-                recorder.ondataavailable = (event) => chunks.push(event.data);
-                const stopped = new Promise<Blob>((resolve) => {
-                  recorder.onstop = () => resolve(new Blob(chunks, { type: recorder.mimeType || "audio/webm" }));
-                });
-                recorder.start();
-                window.setTimeout(() => recorder.stop(), 4000);
-                const blob = await stopped;
-                stream.getTracks().forEach((track) => track.stop());
-                const body = new FormData();
-                body.append("audio", blob, "speech.webm");
-                const res = await fetch("/api/chat/transcribe", { method: "POST", body });
-                const data = await res.json();
-                if (data.text) setInputMessage(data.text);
-              }}
-            >
-              Record
-            </button>
             <input
               type="text"
               placeholder="Ask anything about your knowledge base..."

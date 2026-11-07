@@ -54,6 +54,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api/integrations/") ||
     pathname.startsWith("/api/scim/") ||
     pathname.startsWith("/api/waitlist") ||
+    pathname.startsWith("/api/demo/") ||
+    pathname.startsWith("/api/cron/") ||
     pathname.startsWith("/api/billing/webhook") ||
     pathname === "/favicon.ico" ||
     pathname.match(/\.(png|jpg|jpeg|svg|gif|webp|ico|css|js|woff|woff2)$/)
