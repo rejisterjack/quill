@@ -104,7 +104,11 @@ export async function seedDemo() {
   console.log("Seed complete. Demo: demo@quill.dev / Demo1234!");
 }
 
-if (import.meta.main) {
+const isDirectRun =
+  typeof process !== "undefined" &&
+  Boolean(process.argv[1]?.includes("prisma/seed"));
+
+if (isDirectRun) {
   seedDemo()
     .then(() => prisma.$disconnect())
     .catch(async (err) => {
