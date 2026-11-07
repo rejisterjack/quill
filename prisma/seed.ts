@@ -64,7 +64,7 @@ Self-host on Vercel + Neon for private data. The public playground resets daily.
       contentType: "text/plain",
       size: content.length,
       content,
-      status: "READY",
+      status: "COMPLETED",
       chunkCount: 1,
       metadata: { inlineText: content },
       chunks: {
