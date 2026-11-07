@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { prismaForWorkspace } from "@/lib/hosting";
 import { writeAudit } from "@/lib/audit";
 import { decryptContent } from "@/lib/crypto";
+import { isDemoMode } from "@/lib/demo";
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
@@ -45,6 +46,12 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json(
       { error: "Forbidden: Administrator privileges required to delete documents." },
       { status: 403 }
+    );
+  }
+  if (isDemoMode()) {
+    return NextResponse.json(
+      { error: "Document deletion is disabled in demo mode" },
+      { status: 403 },
     );
   }
 

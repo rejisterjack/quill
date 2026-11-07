@@ -6,6 +6,7 @@ import { Providers } from "./providers";
 import { siteConfig } from "@/config/site";
 import { fontSans, fontMono } from "@/config/fonts";
 import { AppShell } from "@/components/app-shell";
+import { DemoBanner } from "@/components/demo-banner";
 
 export const metadata: Metadata = {
   title: {
@@ -45,6 +46,7 @@ export default function RootLayout({
           <div className="fixed inset-0 pointer-events-none bg-ambient-mesh opacity-70 z-0" />
           <div className="fixed inset-0 pointer-events-none bg-grid-pattern opacity-30 z-0" />
 
+          <DemoBanner />
           <AppShell>{children}</AppShell>
         </Providers>
       </body>

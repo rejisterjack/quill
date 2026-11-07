@@ -25,12 +25,13 @@ function LoginContent() {
   const { user, loading: authLoading, refresh } = useAuth();
   const redirectParam = searchParams.get("redirect");
 
+  const isDemo = process.env.NEXT_PUBLIC_DEMO === "true";
   const [selectedTab, setSelectedTab] = useState<"login" | "register">("login");
 
   // Login form state
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(isDemo ? "demo@quill.dev" : "");
   const [ssoSlug, setSsoSlug] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState(isDemo ? "Demo1234!" : "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -156,39 +157,48 @@ function LoginContent() {
 
         <Card className="p-4 sm:p-6 shadow-2xl border border-default-200/60 dark:border-white/10 bg-default-50/70 dark:bg-default-50/20 backdrop-blur-xl rounded-2xl">
           <CardHeader className="flex flex-col gap-3 pb-0 p-0">
-            {/* Tab switch buttons */}
-            <div className="flex w-full p-1 bg-default-100/80 dark:bg-default-50/30 rounded-xl gap-1 border border-default-200/40 dark:border-default-100/30">
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedTab("login");
-                  setError(null);
-                }}
-                className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${
-                  selectedTab === "login"
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                    : "text-default-500 hover:text-foreground"
-                }`}
-              >
-                <ArrowRightEndOnRectangleIcon className="w-4 h-4" />
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedTab("register");
-                  setError(null);
-                }}
-                className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${
-                  selectedTab === "register"
-                    ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
-                    : "text-default-500 hover:text-foreground"
-                }`}
-              >
-                <UserPlusIcon className="w-4 h-4" />
-                Create Account
-              </button>
-            </div>
+            {/* Tab switch buttons — register hidden on the public demo */}
+            {!isDemo ? (
+              <div className="flex w-full p-1 bg-default-100/80 dark:bg-default-50/30 rounded-xl gap-1 border border-default-200/40 dark:border-default-100/30">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTab("login");
+                    setError(null);
+                  }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${
+                    selectedTab === "login"
+                      ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                      : "text-default-500 hover:text-foreground"
+                  }`}
+                >
+                  <ArrowRightEndOnRectangleIcon className="w-4 h-4" />
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTab("register");
+                    setError(null);
+                  }}
+                  className={`flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${
+                    selectedTab === "register"
+                      ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                      : "text-default-500 hover:text-foreground"
+                  }`}
+                >
+                  <UserPlusIcon className="w-4 h-4" />
+                  Create Account
+                </button>
+              </div>
+            ) : (
+              <p className="text-xs text-default-500 text-center">
+                Public demo — use{" "}
+                <code className="font-mono text-foreground">demo@quill.dev</code> /{" "}
+                <code className="font-mono text-foreground">Demo1234!</code>. Open
+                registration is off.
+              </p>
+            )}
           </CardHeader>
 
           <CardContent className="pt-6 p-0">

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { writeAudit } from "@/lib/audit";
+import { isDemoMode } from "@/lib/demo";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
@@ -42,6 +43,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (isDemoMode()) {
+    return NextResponse.json(
+      { error: "Workspace deletion is disabled in demo mode" },
+      { status: 403 },
+    );
+  }
   const { id } = await params;
   const workspace = await prisma.workspace.findUnique({ where: { id } });
   if (!workspace || workspace.ownerId !== user.id) {

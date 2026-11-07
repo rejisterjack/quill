@@ -7,6 +7,15 @@
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL%20%2B%20pgvector-blue?style=flat&logo=postgresql)](https://neon.tech/)
 [![TypeScript](https://img.shields.io/badge/Language-1024--dim%20TypeScript-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/License-MIT-emerald?style=flat)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/demo-quill.rejisterjack.com-cyan?style=flat)](https://quill.rejisterjack.com)
+
+---
+
+## Demo (shared playground)
+
+The public host [quill.rejisterjack.com](https://quill.rejisterjack.com) is a **shared writable playground** with fake data (`DEMO_MODE=true`). Sign in as `demo@quill.dev` / `Demo1234!` (or `admin@quill.dev` / `Admin1234!`). Open registration and workspace/document deletion are off. Chat and uploads still work so you can try the product; data resets daily. Do not put secrets there — self-host for private data.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frejisterjack%2Fquill&env=DATABASE_URL,AUTH_SECRET,OPENROUTER_API_KEY,UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,NEXT_PUBLIC_APP_URL&envDescription=See%20README%20for%20required%20production%20env%20vars)
 
 ---
 
@@ -94,7 +103,22 @@ NEXT_PUBLIC_APP_URL="http://localhost:7392"
 
 # Session secret. Required in production.
 AUTH_SECRET="your-super-secret-jwt-key"
+
+# Required in production (rate limiting fail-closed without them)
+UPSTASH_REDIS_REST_URL="https://….upstash.io"
+UPSTASH_REDIS_REST_TOKEN="…"
 ```
+
+| Variable | Required in prod | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Neon pooler URL with `sslmode=require` + pgvector |
+| `AUTH_SECRET` | yes | JWT / Auth.js secret (`openssl rand -base64 32`) |
+| `OPENROUTER_API_KEY` | yes for chat | Free-tier models work |
+| `UPSTASH_REDIS_REST_*` | yes | Rate limiting |
+| `NEXT_PUBLIC_APP_URL` | yes | Canonical HTTPS URL |
+| `DEMO_MODE` / `NEXT_PUBLIC_DEMO` | public playground only | Banner, seed login, register off |
+| `DEMO_RESET_SECRET` | playground | Header `x-demo-reset-secret` for `POST /api/demo/reset` |
+| `CRON_SECRET` | playground | Bearer auth for daily `/api/cron/demo-reset` |
 
 **Local Community:** Cloudinary and Inngest are optional. Leave `CLOUDINARY_URL` empty to store uploads under `.quill-uploads` on disk. Document ingest runs in-process without Inngest when those cloud services are unset—enough for local Community Edition. Add Cloudinary and/or Inngest when you want durable object storage and background jobs in a shared deploy.
 
