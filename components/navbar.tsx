@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Button, Link, Chip, Avatar } from "@heroui/react";
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,6 +18,23 @@ import {
 export const Navbar = () => {
   const pathname = usePathname();
   const { user, logout, loading } = useAuth();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const deleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/account", { method: "DELETE" });
+      if (!res.ok) {
+        setDeleting(false);
+        setConfirmDelete(false);
+        return;
+      }
+      window.location.assign("/");
+    } catch {
+      setDeleting(false);
+    }
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-default-200/50 dark:border-white/10 bg-background/70 backdrop-blur-xl transition-all">
@@ -134,6 +151,26 @@ export const Navbar = () => {
                       </span>
                     </div>
                   </div>
+                  {confirmDelete ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      isDisabled={deleting}
+                      onPress={() => void deleteAccount()}
+                      className="text-xs text-danger px-2.5 h-8"
+                    >
+                      {deleting ? "Deleting…" : "Confirm delete"}
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onPress={() => setConfirmDelete(true)}
+                      className="text-xs px-2.5 h-8"
+                    >
+                      <span className="hidden sm:inline">Delete account</span>
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="ghost"
