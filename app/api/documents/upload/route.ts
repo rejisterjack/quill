@@ -146,6 +146,7 @@ export async function POST(req: NextRequest) {
     );
   } catch (err) {
     const message = err instanceof EmbeddingError || err instanceof Error ? err.message : "Failed to process document";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = err instanceof EmbeddingError ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

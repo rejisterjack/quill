@@ -16,6 +16,7 @@
 /build
 
 # misc
+.quill-uploads/
 .DS_Store
 *.pem
 
