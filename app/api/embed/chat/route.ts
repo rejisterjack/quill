@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   }).catch(() => {});
 
   const body = await req.json();
-  if (!body.message || typeof body.message !== "string") {
+  if (typeof body.message !== "string" || !body.message.trim()) {
     return new Response(JSON.stringify({ error: "Message is required" }), { status: 400 });
   }
   const user = await prisma.user.findUnique({ where: { id: key.userId } });
